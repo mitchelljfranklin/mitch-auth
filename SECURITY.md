@@ -2,12 +2,12 @@
 
 ## Supported versions
 
-Mitch-Auth is a self‑hosted fork. Only the latest commit on the `mitch-voidauth`
+Mitch-Auth is a self‑hosted fork. Only the latest commit on the `mitch-auth`
 branch receives security patches. We do not backport fixes to older commits.
 
 | Branch            | Supported          |
 | ----------------- | ------------------ |
-| `mitch-voidauth`  | :white_check_mark: |
+| `mitch-auth`  | :white_check_mark: |
 | main (upstream)   | See [voidauth/voidauth](https://github.com/voidauth/voidauth) |
 
 ## Reporting a vulnerability

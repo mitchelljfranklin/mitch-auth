@@ -5,8 +5,8 @@ Fork of [voidauth/voidauth](https://github.com/voidauth/voidauth) — an SSO/OID
 ## Branch structure (fork)
 
 - **`main`** — clean mirror of `upstream/main`. No fork-specific files here.
-- **`mitch-voidauth`** — fork deployment branch and repo default. LDAP sync and fork-only CI/config live here.
-- Upstream-bound features branch off `main`; fork-only features branch off `mitch-voidauth`.
+- **`mitch-auth`** — fork deployment branch and repo default. LDAP sync and fork-only CI/config live here.
+- Upstream-bound features branch off `main`; fork-only features branch off `mitch-auth`.
 
 Upstream sync:
 
@@ -14,7 +14,7 @@ Upstream sync:
 git checkout main
 git pull upstream main
 git push origin main
-git checkout mitch-voidauth
+git checkout mitch-auth
 git merge main
 ```
 
@@ -26,7 +26,7 @@ When upstream's `Dockerfile` changes, mirror it into `Dockerfile.fork` (only the
 
 - `Dockerfile.fork` — public `node:24-alpine3.22` instead of private `dhi.io/node:24-alpine3.22`
 - `.github/workflows/release-fork.yml` — multi-arch build/push to `ghcr.io/mitchelljfranklin/mitch-auth`
-- `.github/workflows/docs-fork.yml` — VitePress build → GitHub Pages (triggers on any push to `mitch-voidauth` touching `docs/**`)
+- `.github/workflows/docs-fork.yml` — VitePress build → GitHub Pages (triggers on any push to `mitch-auth` touching `docs/**`)
 - `compose.fork.yml` — fork GHCR image, exposes LDAP port 3890
 - `.github/README.md` (fork landing page; root `README.md` stays upstream-clean), `SECURITY.md`, issue templates, PR template
 - `docs/.vitepress/`, `docs/index.md`, `docs/welcome.md`, `docs/package.json` (VitePress replaces upstream Docsify)

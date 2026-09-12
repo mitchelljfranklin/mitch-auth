@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/voidauth/voidauth
     about: For issues not related to the LDAP Sync feature, consider reporting upstream
   - name: Documentation
-    url: https://github.com/mitchelljfranklin/mitch-auth/blob/mitch-voidauth/docs/Getting-Started.md
+    url: https://github.com/mitchelljfranklin/mitch-auth/blob/mitch-auth/docs/Getting-Started.md
     about: Read the documentation before opening an issue
   - name: Quick Start
     url: https://github.com/mitchelljfranklin/mitch-auth#quick-start

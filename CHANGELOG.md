@@ -82,7 +82,7 @@ Security hardening release based on a full audit. Highlights:
 - `docs/package.json` — separate VitePress dependency to avoid merge conflicts with root `package.json`
 
 #### Changed
-- **Rebranded**: `mitch-voidauth` / `Mitch-VoidAuth` → `mitch-auth` / `Mitch-Auth`; GHCR image is now `ghcr.io/mitchelljfranklin/mitch-auth` (requires the GitHub repository to be renamed to match — old URLs redirect automatically after rename). Git branch names are unchanged
+- **Rebranded**: `mitch-voidauth` / `Mitch-VoidAuth` → `mitch-auth` / `Mitch-Auth`; GHCR image is now `ghcr.io/mitchelljfranklin/mitch-auth`; GitHub repository renamed to match (old URLs redirect automatically); deployment branch renamed `mitch-voidauth` → `mitch-auth`
 - Docker image: `voidauth/voidauth:latest` → `ghcr.io/mitchelljfranklin/mitch-auth:latest`
 - Docker base image: `dhi.io/node:24-alpine3.22` → `node:24-alpine3.22` (public) in `Dockerfile.fork`
 - Documentation URLs: `voidauth.app` → `auth.mitchforge.com`

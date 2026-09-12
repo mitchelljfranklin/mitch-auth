@@ -1,6 +1,6 @@
 # 🛡️ Mitch-Auth v2026.09.0 — Security Hardening Release
 
-> **TL;DR** — A full security audit of the fork produced **30+ fixes and hardening changes**, an **OWASP ZAP penetration scan** came back clean (zero high-severity findings), and a **52-commit upstream sync** brings the Custom Claims feature, per-proxy trust (`TRUSTED_PROXIES`), and supply-chain hardening. Sessions are now 14 days, TOTP codes can't be replayed, and every fork behaviour is enforced by an automated seam + verification system.
+> **TL;DR** — A full security audit of the fork produced **30+ fixes and hardening changes**, an **OWASP ZAP penetration scan** came back clean (zero high-severity findings), and **96 upstream commits across three syncs** bring the Custom Claims feature, admin table pagination, TOTP account lockout, per-proxy trust (`TRUSTED_PROXIES`), and supply-chain hardening. Sessions are now 14 days, TOTP codes cannot be replayed, and every fork behaviour is enforced by an automated seam + verification system. **The project is now rebranded to Mitch-Auth - see the migration note below.**
 
 ---
 
@@ -49,12 +49,14 @@
 
 ---
 
-## ✨ New From Upstream (52 commits)
+## ✨ New From Upstream (96 commits across three syncs)
 
 - **Custom Claims** — attach name/value claims (strings, numbers, objects, arrays) to users, groups, and invitations; calculated per-user and included in every OIDC token and user-info response. Manage from the new **Admin → Claims** page
+- **Admin table pagination** — users and password-resets APIs are paginated; your chosen page size is remembered across admin pages; debounced dropdown searches
+- **TOTP account lockout** — 10 failed code attempts within 10 minutes locks the account for 10 minutes, with a visible countdown on the MFA screen
 - **`TRUSTED_PROXIES`** environment variable — trust specific proxy IPs/CIDRs instead of blanket trust
 - **Supply-chain hardening** — GitHub Actions pinned to commit SHAs, Docker base images digest-pinned, Dependabot enabled
-- Prototype-pollution fix, COOP adjustments for popup OIDC flows, ru-RU locale, Angular 22 alignment
+- Prototype-pollution fix, ProxyAuth path-overmatching fix, COOP adjustments for popup OIDC flows, LIKE-wildcard search escaping, ru-RU + nl-NL locales, Angular 22 alignment
 
 ---
 
@@ -90,12 +92,26 @@
 
 ---
 
+## 🏷️ Rebranding & Migration
+
+This release renames the project from **Mitch-VoidAuth** to **Mitch-Auth**. For existing deployments:
+
+1. **Update your compose file's image line**:
+   ```yaml
+   image: ghcr.io/mitchelljfranklin/mitch-auth:latest   # was .../mitch-voidauth:latest
+   ```
+2. Your existing **config volume and database carry over unchanged** — no data migration required
+3. The schema migration (TOTP replay tracking + custom claims + TOTP lockout) runs automatically on first start
+4. The old `mitch-voidauth` GHCR image is frozen (no further updates); all new releases publish under `mitch-auth`
+
+---
+
 ## ⚠️ Upgrade Notes
 
-1. **Remove `TRUST_PROXY` from your environment** if you ever set it — replaced by upstream's `TRUSTED_PROXIES` (the default trusts private ranges, which suits typical reverse-proxy setups)
-2. **Sessions are shorter now** — expect re-login after 14 days; nothing else required
-3. **LDAP sync linking is opt-in** — if you relied on same-named local accounts being claimed by LDAP, set `LDAP_SYNC_LINK_EXISTING_USERS=true`
-4. **LDAP admins** — membership granted by sync is revoked when users leave the LDAP admin group; manual assignments are permanent
+1. **Remove `TRUST_PROXY` from your environment** if you ever set it - replaced by upstream's `TRUSTED_PROXIES` (the default trusts private ranges, which suits typical reverse-proxy setups)
+2. **Sessions are shorter now** - expect re-login after 14 days; nothing else required
+3. **LDAP sync linking is opt-in** - if you relied on same-named local accounts being claimed by LDAP, set `LDAP_SYNC_LINK_EXISTING_USERS=true`
+4. **LDAP admins** - membership granted by sync is revoked when users leave the LDAP admin group; manual assignments are permanent
 5. Schema migration runs automatically on first start (TOTP replay tracking + custom claims)
 
 ---

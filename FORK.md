@@ -1,6 +1,6 @@
 # Fork Divergence Manifest & Merge Playbook
 
-This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth) on branch `main` and carries intentional changes on `mitch-voidauth`. This document is the authoritative list of every divergence and the procedure for absorbing upstream updates. **Update this file whenever a merge adds or retires a divergence.**
+This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth) on branch `main` and carries intentional changes on `mitch-auth`. This document is the authoritative list of every divergence and the procedure for absorbing upstream updates. **Update this file whenever a merge adds or retires a divergence.**
 
 ## Per-clone setup
 
@@ -47,7 +47,7 @@ git remote add upstream https://github.com/voidauth/voidauth.git
 ## Merge playbook
 
 1. **Pre-flight**: `git fetch upstream` → `git log --oneline <base>..upstream/main` → `git diff --stat <base>..upstream/main -- server/ shared/ frontend/src/ Dockerfile package.json`. Confirm this manifest is current.
-2. **Branch**: work on an `upstream-sync` branch off `mitch-voidauth`; `git merge main`.
+2. **Branch**: work on an `upstream-sync` branch off `mitch-auth`; `git merge main`.
 3. **Resolve shared-file conflicts by taking upstream's side wholesale**: for any conflicted file listed in `scripts/fork-seams.mjs` run `git checkout --theirs <file>`, then `npm run seams:apply` re-inserts all fork seams. A `STALE` result means upstream reshaped a seam region — re-apply that seam by hand and update its anchor in `scripts/fork-seams.mjs`. Non-seam files (fork-owned files, and the owned-file divergences below) resolve manually.
 4. **Retired divergences**: if upstream now implements something we forked, remove the fork version everywhere (code, switch case, docs) and delete the manifest row. Retired so far: `TRUST_PROXY` (superseded by upstream `TRUSTED_PROXIES`), base-href trailing slash (upstream fixed).
 5. **i18n**: for `frontend/public/i18n/en-US.json` conflicts, take upstream's file wholesale, then re-add fork-only keys (currently the `admin.settings.*` / `admin.common.actions.save` / `app.navigation.admin.settings` trees). Watch for upstream reshaping shared keys into `{label, tooltip}` objects — those win; check no fork component still references the flat key. Then `npm run i18n:normalize`.

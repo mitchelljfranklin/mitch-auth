@@ -87,7 +87,7 @@ export default defineConfig({
 
     editLink: {
       pattern:
-        "https://github.com/mitchelljfranklin/mitch-auth/edit/mitch-voidauth/docs/:path",
+        "https://github.com/mitchelljfranklin/mitch-auth/edit/mitch-auth/docs/:path",
       text: "Edit this page on GitHub",
     },
 

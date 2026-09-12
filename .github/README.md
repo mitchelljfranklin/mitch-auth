@@ -5,6 +5,9 @@
 
 > An enhanced fork of VoidAuth — SSO for your self-hosted universe, with LDAP Directory Sync, runtime admin configuration, multi-arch Docker images, and all upstream features.
 
+> [!IMPORTANT]
+> **Rebranding (September 2026)** — this project is now **Mitch-Auth**. The Docker image has moved to `ghcr.io/mitchelljfranklin/mitch-auth:latest`. If you deployed the previous `mitch-voidauth` image, update your compose file's `image:` line to the new name when upgrading — your existing config volume and database carry over unchanged.
+
 ---
 
 ## What is Mitch-Auth

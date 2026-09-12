@@ -2,7 +2,7 @@ name: Deploy Docs (Fork)
 
 on:
   push:
-    branches: [mitch-voidauth]
+    branches: [mitch-auth]
     paths:
       - "docs/**"
       - ".github/workflows/docs-fork.yml"

@@ -309,11 +309,11 @@ const seams = [
     id: 'codeql-scan-fork-branch',
     file: '.github/workflows/codeql.yml',
     ref: 'T1',
-    description: 'CodeQL analyzes mitch-voidauth (the deployed fork code) instead of the upstream mirror',
-    applied: `branches: [ "mitch-voidauth" ]`,
+    description: 'CodeQL analyzes mitch-auth (the deployed fork code) instead of the upstream mirror',
+    applied: `branches: [ "mitch-auth" ]`,
     op: 'replace-all-lines',
     match: `branches: [ "main" ]`,
-    replacement: `  branches: [ "mitch-voidauth" ]`,
+    replacement: `  branches: [ "mitch-auth" ]`,
   },
 
   // ---------- server/oidc/provider.ts ----------
