@@ -248,6 +248,7 @@ export async function serve() {
     res.status(404).send({
       message: 'Translation file not found.',
     })
+    return
   })
 
   // override index.html return, inject app title
@@ -292,12 +293,14 @@ export async function serve() {
       res.status(404).send({
         message: `Invalid subdirectory. Expected a base path of ${basePath()}/ based on APP_URL, but got ${req.protocol}://${req.host}${req.originalUrl}`,
       })
+      return
     }
   })
 
   // All other unresolved are not found
   app.use((_req, res) => {
     res.sendStatus(404)
+    return
   })
 
   // Last chance error handler
@@ -315,6 +318,7 @@ export async function serve() {
       return
     }
     res.sendStatus(res.statusCode)
+    return
   })
 
   app.listen(appConfig.APP_PORT, () => {
