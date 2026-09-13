@@ -50,12 +50,15 @@ for (const seam of seams) {
   }
 
   if (seam.op === 'replace-line') {
-    const idx = findLine(lines, seam.match)
+    const idx = lines.findIndex(l => l.includes(seam.match))
     if (idx === -1) {
       results.stale.push({ seam, reason: `match not found: ${seam.match}` })
       continue
     }
-    lines[idx] = seam.replacement
+    // preserve the indentation of the line being replaced; seams must not
+    // de-indent nested YAML/code (a flattened `branches:` broke CodeQL once)
+    const matchedIndent = lines[idx].match(/^\s*/)[0]
+    lines[idx] = seam.replacement.replace(/^\s*/, matchedIndent)
     writeFileSync(seam.file, lines.join(eol))
     results.applied.push(seam)
     continue
@@ -66,7 +69,7 @@ for (const seam of seams) {
     const updated = lines.map(l => {
       if (l.includes(seam.match)) {
         count++
-        return seam.replacement
+        return seam.replacement.replace(/^\s*/, l.match(/^\s*/)[0])
       }
       return l
     })
