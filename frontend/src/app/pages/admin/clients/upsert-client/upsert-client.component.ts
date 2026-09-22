@@ -89,6 +89,7 @@ export class UpsertClientComponent implements OnInit {
         return null
       },
     ]),
+    backchannel_logout_uri: new FormControl<string | null>(null, [isValidWebURLControl]),
     skip_consent: new FormControl<boolean>(true, { nonNullable: true }),
     require_mfa: new FormControl<boolean>(false, { nonNullable: true }),
     logo_uri: new FormControl<string | null>(null, [isValidWebURLControl]),
@@ -208,6 +209,7 @@ export class UpsertClientComponent implements OnInit {
         response_types: client.response_types ?? ['code'],
         grant_types: (client.grant_types as ClientUpsertRequest['grant_types'] | undefined) ?? ['authorization_code', 'refresh_token'],
         post_logout_redirect_uri: client.post_logout_redirect_uris?.[0] ?? null,
+        backchannel_logout_uri: client.backchannel_logout_uri ?? null,
         skip_consent: client.skip_consent ?? true,
         require_mfa: client.require_mfa ?? false,
         logo_uri: client.logo_uri ?? null,

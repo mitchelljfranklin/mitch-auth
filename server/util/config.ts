@@ -335,6 +335,9 @@ function registerClientVariable(clients: Map<string, ClientResponse>,
       case 'CLIENT_HOMEPAGE_URL':
         client.client_uri = validateClientVar(value, clientUpsertValidator.client_uri)
         break
+      case 'CLIENT_BACKCHANNEL_LOGOUT_URI':
+        client.backchannel_logout_uri = validateClientVar(value, clientUpsertValidator.backchannel_logout_uri)
+        break
       case 'CLIENT_LOGO_URL':
         client.logo_uri = validateClientVar(value, clientUpsertValidator.logo_uri)
         break

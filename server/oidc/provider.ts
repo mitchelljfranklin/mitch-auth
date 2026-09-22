@@ -21,7 +21,7 @@ import add from 'oidc-provider/lib/helpers/add_client.js'
 import { db } from '../db/db'
 import { mergeKeys } from '../db/util'
 import type { User } from '@shared/db/User'
-import { PayloadTypes } from '@shared/db/OIDCPayload'
+import { PayloadTypes, type OIDCPayload } from '@shared/db/OIDCPayload'
 import { TABLES } from '@shared/db'
 import { getAllClaims, getCustomClaims } from '../db/claims'
 import { getCurrentProviderConfig, setCurrentProviderConfig } from './configuration'
@@ -456,6 +456,11 @@ async function getNextConfig() {
 async function createProvider(): Promise<Provider> {
   const config = await getNextConfig()
   const nextProvider = new Provider(`${appConfig.APP_URL}/oidc`, config)
+  assert.equal(
+    typeof nextProvider.Client.prototype.backchannelLogout,
+    'function',
+    'oidc-provider Client.prototype.backchannelLogout does not exist.',
+  )
   nextProvider.proxy = true
   // Log provider errors
   nextProvider.on('server_error', (_ctx, error) => {
@@ -668,5 +673,44 @@ export async function getSession(req: IncomingMessage, res: ServerResponse) {
     return await provider().Session.get(ctx)
   } catch (_e) {
     return null
+  }
+}
+
+export async function endUserSessions(userId: string) {
+  const sessions = await db().table<OIDCPayload>(TABLES.OIDC_PAYLOADS)
+    .select('id')
+    .where({ type: PayloadTypes.Session, accountId: userId })
+
+  for (const { id } of sessions) {
+    const session = await provider().Session.find(id)
+    if (!session) {
+      // something went wrong, delete the session from the database anyway
+      await db().table<OIDCPayload>(TABLES.OIDC_PAYLOADS)
+        .delete()
+        .where({ type: PayloadTypes.Session, id })
+      continue
+    }
+
+    for (const clientId of Object.keys(session.authorizations ?? {})) {
+      const client = await provider().Client.find(clientId)
+      if (!client?.backchannelLogoutUri) {
+        continue
+      }
+
+      try {
+        await client.backchannelLogout(userId, session.sidFor(clientId))
+      } catch (error) {
+        logger({
+          level: 'error',
+          message: 'OIDC backchannel logout request failed.',
+          errors: [{
+            name: error instanceof Error ? error.name : 'Error',
+            message: error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error',
+          }],
+        })
+      }
+    }
+
+    await session.destroy()
   }
 }

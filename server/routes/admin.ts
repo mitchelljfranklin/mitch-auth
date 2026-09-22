@@ -1,6 +1,8 @@
 import { Router, type Response } from 'express'
 import { db, rollback } from '../db/db'
-import { isProviderClaimsDesynced, isOIDCProviderError, provider, removeClient, resetProvider, upsertClient } from '../oidc/provider'
+import {
+  endUserSessions, isProviderClaimsDesynced, isOIDCProviderError, provider, removeClient, resetProvider, upsertClient,
+} from '../oidc/provider'
 import { clientUpsertValidator, type ClientUpsert } from '@shared/api-request/admin/ClientUpsert'
 import type { User } from '@shared/db/User'
 import { randomBytes, randomUUID } from 'crypto'
@@ -10,7 +12,7 @@ import { groupUpsertValidator } from '@shared/api-request/admin/GroupUpsert'
 import { customClaimUpsertValidator } from '@shared/api-request/admin/CustomClaimUpsert'
 import { ADMIN_GROUP, PROTECTED_CLAIMS_SET, TTLs } from '@shared/constants'
 import { userUpdateValidator } from '@shared/api-request/admin/UserUpdate'
-import { endSessions, getUserById, getUsers } from '../db/user'
+import { getUserById, getUsers } from '../db/user'
 import { createExpiration, mergeKeys } from '../db/util'
 import { getInvitationDetails, getInvitations } from '../db/invitations'
 import type { Invitation } from '@shared/db/Invitation'
@@ -594,6 +596,7 @@ adminRouter.delete('/user/:id',
       return
     }
 
+    await endUserSessions(id)
     const count = await db().table<User>(TABLES.USER).delete().where({ id })
     await db().table<OIDCPayload>(TABLES.OIDC_PAYLOADS).delete().where({ accountId: id })
 
@@ -624,7 +627,7 @@ adminRouter.post('/user/signout/:id',
       return
     }
 
-    await endSessions(id)
+    await endUserSessions(id)
 
     res.send()
   })
