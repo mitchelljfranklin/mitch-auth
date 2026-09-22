@@ -21,6 +21,15 @@ if (!sha) {
 const date = argDate ?? new Date().toISOString().slice(0, 10)
 const notes = argNotes ?? ''
 
+// guard: refuse to record a base that is not an ancestor of HEAD — recording
+// a base before its commits are actually merged makes the drift monitor lie
+try {
+  execSync(`git merge-base --is-ancestor ${sha} HEAD`, { stdio: 'pipe' })
+} catch {
+  console.error(`base:set: ${sha} is NOT merged into the current branch — merge it first, then record it.`)
+  process.exit(1)
+}
+
 for (const [file, tableMarker, columnCount] of [
   ['FORK.md', '| Upstream base | Merged on | Notes |', 3],
   ['CHANGELOG.md', '| Upstream base | Merged on |', 2],
