@@ -79,7 +79,12 @@ synced users have no local hash), so the result is always correct.
 
 **MFA** is enforced via TOTP (time‑based one‑time password) and
 WebAuthn passkeys. Per‑user and per‑group MFA requirements are
-configurable.
+configurable. A user's `mfaRequired` flag is authoritative: completing
+the MFA page enables MFA on the account permanently, and app‑level MFA
+enforcement (OIDC clients, ProxyAuth domains) requires the user's own
+MFA to be enabled. Admins can enable/disable MFA per account via CLI
+(`voidauth user mfa enable|disable <username>`); disabling clears
+stored TOTP codes.
 
 **Sessions** use encrypted JWTs managed by `oidc‑provider`. Cookies are
 HTTP‑only, Secure, and SameSite=Lax.

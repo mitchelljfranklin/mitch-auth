@@ -1,6 +1,6 @@
-# 🛡️ Mitch-Auth v2026.09.0 — Security Hardening Release
+# 🚀 Mitch-Auth v2026.10.0 — Rebrand, MFA Model Rework & Backchannel Logout
 
-> **TL;DR** — A full security audit of the fork produced **30+ fixes and hardening changes**, an **OWASP ZAP penetration scan** came back clean (zero high-severity findings), and **96 upstream commits across three syncs** bring the Custom Claims feature, admin table pagination, TOTP account lockout, per-proxy trust (`TRUSTED_PROXIES`), and supply-chain hardening. Sessions are now 14 days, TOTP codes cannot be replayed, and every fork behaviour is enforced by an automated seam + verification system. **The project is now rebranded to Mitch-Auth - see the migration note below.**
+> **TL;DR** — The project is now **Mitch-Auth** (new name, new Docker image — migration required, see below). This release brings upstream's **MFA model rework** (per-account MFA is now authoritative, with new CLI commands), **backchannel logout** for OIDC clients, **admin table pagination**, upstream's own fix for the password-strength bypass, and a full pipeline/tooling refresh (CodeQL green, drift monitor self-closing).
 
 ---
 
@@ -8,120 +8,91 @@
 
 | Area | Summary |
 |---|---|
-| 🔒 Security fixes | 30+ changes from a full code audit |
-| 🧪 Penetration testing | OWASP ZAP scan — 0 high-severity findings; all mediums triaged (fixed or documented as accepted trade-offs) |
-| ⬆️ Upstream sync | 52 commits absorbed, including the **Custom Claims** feature |
-| 🐛 Regression fixes | 6 user-facing bugs found and fixed during hardening |
-| 🧰 Tooling | Automated fork-verification, 3 integration harnesses, runtime smoke suite, upstream drift monitor |
+| 🏷️ Rebranding | Project, Docker image, docs and repo are now **Mitch-Auth / mitch-auth** — migration required for existing deployments |
+| 🔁 MFA model | Per-account MFA is **authoritative**; new MFA CLI commands; passkey user-verification tracking (new migration) |
+| 🚪 Backchannel logout | Admin signout and account deletion now end client sessions via backchannel logout |
+| 📄 Admin tables | Paginated users/password-resets APIs; page size remembered across admin pages |
+| 🐛 Fixes | Password-strength enforcement, paginator page-size, test-email dialog, pending OIDC interactions during signup |
+| 🧰 Tooling | CodeQL aligned and scanning the fork branch, seam indentation preservation, self-closing drift issues |
 
 ---
 
-## 🛡️ Security Hardening
+## 🏷️ Rebranding & Migration — **read this first**
 
-### Authentication & Sessions
-- **Session lifetime reduced** from 1 year → **14 days** (grants 90 days). Existing sessions keep their old expiry until they lapse naturally
-- **Changing your password now signs out every session** for that account
-- **TOTP replay protection** — a one-time code can no longer be reused within its validity window; confirming MFA enrolment no longer "burns" the current code
-- Password-strength policy is now actually enforced — a missing `return` allowed weak passwords to be silently stored during password change and reset *(upstream bug)*
-- A successful password reset now invalidates **all** outstanding reset tokens
-- Login responses take equal time for unknown usernames and valid ones (no username oracle)
-
-### LDAP (Directory Sync & Embedded Server)
-- **Bind-failure backoff** — 5 consecutive failed binds from one source triggers exponential blocking (30 s → 15 min), invisible to the attacker
-- **Connection caps + idle timeouts** — max 64 concurrent connections, 5-minute idle disconnect
-- **Argon2 verification moved to a worker pool** — login floods can no longer stall the whole SSO
-- **Synced-account linking is now opt-in** (`LDAP_SYNC_LINK_EXISTING_USERS`, default off) — directory entries can no longer silently claim same-named local accounts
-- **Admin rights are provenance-aware** — sync-granted admins are demoted when they leave the LDAP admin group; manually assigned admins are never touched
-- New diagnostics warn when the configured LDAP admin group is missing from the directory or invisible via `memberOf`
-
-### Transport, Headers & Web Security
-- **CSP `script-src` is now `strict-dynamic` + per-build hashes** — mirrored from Angular's own build policy; blanket `unsafe-inline` is gone
-- **`worker-src` pinned**, index responses sent **`Cache-Control: no-store`**, VCS probe paths (`._darcs`, `.git`, …) return 404
-- Admin-set logo/title are HTML-escaped; the admin email preview iframe is sandboxed
-- **CORS for OIDC endpoints** restricted to each client's registered origins (previously any HTTPS origin)
-- Failed Basic-auth attempts on ProxyAuth endpoints are now rate limited
-- `TRUST_PROXY` replaced by upstream's **`TRUSTED_PROXIES`** (per-proxy/CIDR trust with safety warnings)
-
-### Data Protection
-- Secret challenges (password resets, invites, verifications) are **redacted from stored email logs**
-- Email logs now **purge after 30 days**
-- `send_verify_email` no longer enables mailbox-bombing via user UUID
-
----
-
-## ✨ New From Upstream (96 commits across three syncs)
-
-- **Custom Claims** — attach name/value claims (strings, numbers, objects, arrays) to users, groups, and invitations; calculated per-user and included in every OIDC token and user-info response. Manage from the new **Admin → Claims** page
-- **Admin table pagination** — users and password-resets APIs are paginated; your chosen page size is remembered across admin pages; debounced dropdown searches
-- **TOTP account lockout** — 10 failed code attempts within 10 minutes locks the account for 10 minutes, with a visible countdown on the MFA screen
-- **`TRUSTED_PROXIES`** environment variable — trust specific proxy IPs/CIDRs instead of blanket trust
-- **Supply-chain hardening** — GitHub Actions pinned to commit SHAs, Docker base images digest-pinned, Dependabot enabled
-- Prototype-pollution fix, ProxyAuth path-overmatching fix, COOP adjustments for popup OIDC flows, LIKE-wildcard search escaping, ru-RU + nl-NL locales, Angular 22 alignment
-
----
-
-## 🐛 Bug Fixes
-
-| Fix | Symptom you may have seen |
-|---|---|
-| Deep-link base href | White screen + MIME-type console errors after logout redirects |
-| MFA cancel loop | Cancelling from the MFA screen bounced straight back with a stuck loading spinner |
-| TOTP enrolment | Valid code rejected as "invalid" right after confirming setup |
-| LDAP admin demotion | Manually assigned admins lost rights after an LDAP sync |
-| CSP header regression | Inline scripts blocked behind reverse proxies |
-| Weak password storage | Password policy reported rejection but stored the weak password anyway |
-
----
-
-## 🧰 Maintenance & Tooling
-
-- **`FORK.md`** — authoritative manifest of every fork divergence (29 seams + 22 owned-file behaviours) with an upstream-merge playbook
-- **`npm run seams:apply`** — after a merge, shared-file conflicts resolve by taking upstream's side and re-inserting fork seams in one command (stale anchors fail loudly)
-- **`npm run fork:check`** — verifies every divergence survived a merge
-- **Integration harnesses** — `test:totp`, `test:ldap-sync`, `test:ldap-guard` (55 assertions against real dependencies)
-- **`scripts/smoke.ps1`** — 15-assertion runtime smoke suite (`-Ldap` includes the embedded LDAP listener)
-- **Upstream drift monitor** — weekly check that opens an issue when upstream moves
-- `npm run i18n:normalize` — keeps locale files merge-friendly
-
----
-
-## 📦 Dependencies
-
-- All security advisories resolved (backend and frontend) via lockfile-only updates — including DOMPurify (XSS) and the `ip-address` chain inside rate limiting
-- Supply chain protected: npm refuses packages published less than 7 days ago
-
----
-
-## 🏷️ Rebranding & Migration
-
-This release renames the project from **Mitch-VoidAuth** to **Mitch-Auth**. For existing deployments:
+This release renames the project from **Mitch-VoidAuth** to **Mitch-Auth**.
 
 1. **Update your compose file's image line**:
    ```yaml
    image: ghcr.io/mitchelljfranklin/mitch-auth:latest   # was .../mitch-voidauth:latest
    ```
-2. Your existing **config volume and database carry over unchanged** — no data migration required
-3. The schema migration (TOTP replay tracking + custom claims + TOTP lockout) runs automatically on first start
-4. The old `mitch-voidauth` GHCR image is frozen (no further updates); all new releases publish under `mitch-auth`
+2. Your existing **config volume and database carry over unchanged** — no data migration beyond the automatic schema updates on first start
+3. The GitHub repository is now `mitchelljfranklin/mitch-auth` (old URLs redirect automatically)
+4. The old `mitch-voidauth` GHCR image is frozen (no further updates); all future releases publish under `mitch-auth`
 
 ---
 
-## ⚠️ Upgrade Notes
+## 🔁 MFA Model Rework
 
-1. **Remove `TRUST_PROXY` from your environment** if you ever set it - replaced by upstream's `TRUSTED_PROXIES` (the default trusts private ranges, which suits typical reverse-proxy setups)
-2. **Sessions are shorter now** - expect re-login after 14 days; nothing else required
-3. **LDAP sync linking is opt-in** - if you relied on same-named local accounts being claimed by LDAP, set `LDAP_SYNC_LINK_EXISTING_USERS=true`
-4. **LDAP admins** - membership granted by sync is revoked when users leave the LDAP admin group; manual assignments are permanent
-5. Schema migration runs automatically on first start (TOTP replay tracking + custom claims)
+Upstream reworked how MFA enforcement works. The behavioral changes:
+
+- **Per-account MFA is now authoritative** — completing the MFA page permanently enables MFA on that account, so users can never believe they have MFA when they don't
+- **App-level enforcement is stricter** — OIDC client and ProxyAuth MFA requirements now *also* require the user's own MFA to be enabled
+- **Admins disabling MFA clears stored TOTP codes** — no stale codes hanging around on accounts where MFA was turned off
+- **New MFA CLI commands**:
+  ```bash
+  voidauth user mfa enable <username>
+  voidauth user mfa disable <username>
+  ```
+- **Passkeys record user-verification usage** (automatic schema migration on first start)
+- Pre-login MFA setup is no longer offered to users who already have a way to complete MFA
+
+---
+
+## 🚪 Backchannel Logout
+
+- OIDC clients can now configure a **Backchannel Logout URL**
+- **Admin user signout** and **account deletion** now attempt to end that user's sessions in connected client applications via backchannel logout
+- See the updated [OIDC App Guides](docs/OIDC-Guides.md) (e.g. Immich) for client configuration
+
+## 📄 Admin Table Pagination
+
+- Users and password-resets APIs are now paginated
+- Your chosen **page size is remembered** across admin pages and sessions
+- Debounced dropdown searches in admin dialogs
+
+## 🖥️ Login Page
+
+- The **Sign-Up button moved to the header** of the login page
+
+---
+
+## 🐛 Fixes
+
+| Fix | Detail |
+|---|---|
+| Password-strength enforcement | Upstream landed its own fix for the missing-`return` bypass (paralleling the fork's hardening); error responses now always return immediately |
+| Paginator page size | Minimum page size corrected to match the UI; count no longer accumulates in the dropdown |
+| Pending OIDC interactions | Signup no longer loses the pending OIDC interaction |
+| Test-email dialog | Submit no longer reloads the page |
+| Migration rollback | Missing `down()` added to the user-group-client-mfa migration |
+
+---
+
+## 🧰 Tooling & Pipeline
+
+- **CodeQL**: action pins aligned (`init` + `analyze` at 4.37.9, fixing the version-mismatch failure) and CodeQL now scans this repository's actual deployment branch
+- **Seam engine**: `seams:apply` preserves matched-line indentation — prevents YAML/code de-indentation in future upstream merges
+- **Upstream drift monitor**: drift issues now auto-close when a sync lands, and titles include the commit count
+- **`npm run base:set`** — one command records the upstream base in `FORK.md` and `CHANGELOG.md`
+- pt-BR translation added; Estonian/French/Dutch/German/Russian/Chinese translations refreshed
 
 ---
 
 ## ✅ Verification Performed
 
-- Full source audit with every finding fixed or explicitly accepted (see `FORK.md` → *Accepted scanner findings*)
-- OWASP ZAP authenticated-surface scan: **0 high-severity findings**; all mediums fixed or documented as design trade-offs
-- 55 integration assertions across 3 harnesses · 15-assertion runtime smoke suite · `tsc` + `eslint` + circular-dependency checks clean
-- Multi-arch image built via `Dockerfile.fork`
+- `fork:check`: 30 seams + 22 owned-file divergences verified intact after the merge
+- Integration harnesses: TOTP replay/lockout, LDAP sync provenance, LDAP bind guard — **all pass**
+- Full pipeline: `tsc`, `eslint`, circular-dependency check, Angular AOT production build, multi-arch image, 15-assertion runtime smoke (incl. embedded LDAP listener)
 
 **Full change details:** [CHANGELOG.md](CHANGELOG.md) · **Fork divergence manifest:** [FORK.md](FORK.md)
 
