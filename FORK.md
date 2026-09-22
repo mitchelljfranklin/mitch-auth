@@ -62,6 +62,7 @@ git remote add upstream https://github.com/voidauth/voidauth.git
 
 | Upstream base | Merged on | Notes |
 |---|---|---|
+| `a1bafc5` | 2026-09-22 |  |
 | `a9254ca` | 2026-09-22 |  |
 | `33b826e` | 2026-09-13 |  |
 | `d1f356b` | 2026-09-10 |  |
