@@ -698,6 +698,9 @@
       "labels": {
         "value": "Value"
       }
+    },
+    "common": {
+      "or": "or"
     }
   },
   "user-expired": {

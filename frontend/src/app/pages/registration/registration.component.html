@@ -41,7 +41,7 @@
       </button>
 
       @if (passkeySupport?.enabled) {
-        <app-text-divider text="or"></app-text-divider>
+        <app-text-divider text="{{ 'components.common.or' | translate }}"></app-text-divider>
         <button mat-flat-button [disabled]="form.invalid" type="button" (click)="passkey()">
           {{
             "registration.actions.passkey-sign-up"
@@ -52,7 +52,7 @@
       }
 
       @if (!invitation) {
-        <app-text-divider text="or"></app-text-divider>
+        <app-text-divider text="{{ 'components.common.or' | translate }}"></app-text-divider>
         <a mat-button routerLink="/login">{{ "registration.actions.login" | translate }}</a>
       }
 

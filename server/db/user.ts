@@ -148,14 +148,16 @@ export async function getUserById(id: string): Promise<UserDetails | undefined> 
   const customClaims = await getUserCustomClaims(user.id)
 
   const hasTotp = await hasTOTP(id)
-  const hasPasskeys = !!(await getUserPasskeys(user.id)).length
+  const passkeys = await getUserPasskeys(user.id)
+  const hasPasskeys = !!(passkeys.length)
+  const hasVerifyPasskeys = passkeys.some(p => p.canVerify)
 
   const { passwordHash, ...userWithoutPassword } = user
   return {
     ...userWithoutPassword,
     groups: groupsWithClaims,
     customClaims,
-    hasMfaGroup, hasPasskeys, hasTotp, hasPassword: !!passwordHash, isAdmin, hasEmail: !!user.email }
+    hasMfaGroup, hasPasskeys, hasVerifyPasskeys, hasTotp, hasPassword: !!passwordHash, isAdmin, hasEmail: !!user.email }
 }
 
 export async function getUserByInput(input: string): Promise<UserDetails | undefined> {
@@ -219,10 +221,6 @@ export async function checkPasswordHash(userId: string, password: string): Promi
   }
 
   return !!user.passwordHash && argon2.verify(user.passwordHash, password)
-}
-
-export function userRequiresMfa(user: Pick<UserDetails, 'mfaRequired' | 'hasMfaGroup'>) {
-  return appConfig.MFA_REQUIRED || !!user.mfaRequired || user.hasMfaGroup
 }
 
 export async function endSessions(userId: string) {

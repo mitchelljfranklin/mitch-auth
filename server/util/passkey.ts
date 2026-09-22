@@ -92,6 +92,8 @@ export async function createPasskey(userId: string,
     // Audit
     createdAt: new Date(),
     lastUsed: new Date(),
+
+    canVerify: registrationInfo.userVerified,
   }
 
   // Save the authenticator info so that we can

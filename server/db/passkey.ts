@@ -90,6 +90,13 @@ export async function deleteAuthenticationOptions(interactionId: string) {
   return await db().delete().table<PasskeyAuthentication>(TABLES.PASSKEY_AUTHENTICATION).where({ interactionId })
 }
 
-export async function updatePasskeyCounter(id: string, counter: number) {
-  return await db().table<Passkey>(TABLES.PASSKEY).update({ counter, lastUsed: new Date() }).where({ id })
+export async function updatePasskeyCounter(id: string, counter: number, verified: boolean) {
+  const passkeyUpdates: Partial<Passkey> = {
+    counter,
+    lastUsed: new Date(),
+  }
+  if (verified) {
+    passkeyUpdates.canVerify = true
+  }
+  return await db().table<Passkey>(TABLES.PASSKEY).update(passkeyUpdates).where({ id })
 }

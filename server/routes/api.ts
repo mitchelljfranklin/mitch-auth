@@ -9,7 +9,7 @@ import { publicRouter } from './public'
 import { proxyAuth } from '../util/proxyAuth'
 import appConfig, { sessionDomainReaches } from '../util/config'
 import { logger } from '../util/logger'
-import { userCanLogin, userIsPrivileged, userIsPrivilegedForEmail, userIsPrivilegedForTotpCreate } from '../util/auth'
+import { userCanLogin, userIsPrivilegedForEmail, userIsPrivilegedForPasskeyCreate, userIsPrivilegedForTotpCreate } from '../util/auth'
 import { getSession } from '../oidc/provider'
 import { transaction } from '../db/db'
 import { zodValidate } from '../util/zodValidate'
@@ -17,6 +17,7 @@ import zod from 'zod'
 import { getProxyAuthWithCache } from '../db/proxyAuth'
 // fork-seam: import basic-auth limiter
 import { basicAuthRateLimit } from '../util/rateLimit'
+import type { amrFactor } from '@shared/user'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -166,13 +167,13 @@ router.use((_req, res) => {
 export async function getUserSessionInteraction(req: Request, res: Response) {
   // get user from session or interaction
   let user: UserDetails | undefined
-  let amr: string[] = []
+  let amr: amrFactor[] = []
   let source: string | null = null
 
   const session = await getSession(req, res)
   const accountId = session?.accountId
   if (accountId) {
-    amr = [...new Set([...amr, ...(session.amr ?? [])])]
+    amr = [...new Set([...amr, ...(session.amr ?? []) as amrFactor[]])]
     user = await getUserById(accountId)
     source = 'session'
   }
@@ -187,7 +188,7 @@ export async function getUserSessionInteraction(req: Request, res: Response) {
       }
     }
     if (user && user.id === interaction.result?.login?.accountId) {
-      amr = [...new Set([...amr, ...(interaction.result.login.amr ?? [])])]
+      amr = [...new Set([...amr, ...(interaction.result.login.amr ?? []) as amrFactor[]])]
     }
   }
 
@@ -200,8 +201,8 @@ export async function getUserSessionInteraction(req: Request, res: Response) {
     amr,
     canLogin: userCanLogin(user, amr),
     isPrivilegedForTotpCreate: userIsPrivilegedForTotpCreate(user, amr),
+    isPrivilegedForPasskeyCreate: userIsPrivilegedForPasskeyCreate(user, amr),
     isPrivilegedForEmail: userIsPrivilegedForEmail(user, amr),
-    isPrivileged: userIsPrivileged(user, amr),
   }
 
   logger({
