@@ -37,7 +37,7 @@ const checks = [
   ['shared/constants.ts', /SESSION: 14 \* DAY/, 'H3 session TTL 14 days'],
   ['shared/constants.ts', /GRANT: 90 \* DAY/, 'H3 grant TTL 90 days'],
   ['shared/constants.ts', /EMAIL_LOG: 30 \* DAY/, 'H3 email_log retention TTL'],
-  ['server/routes/user.ts', /endSessions\(user\.id\)/, 'H4 password change ends sessions'],
+  ['server/routes/user.ts', /endUserSessions\(user\.id\)/, 'H4 password change ends sessions'],
   ['server/routes/public.ts', /delete\(\)\.where\(\{ userId: user\.id \}\)/, 'H5 reset invalidates all user tokens'],
   ['server/routes/auth.ts', /await getEmailVerification\(user\.id\)/, 'H6 send_verify_email gating'],
   ['server/db/totp.ts', /lastUsedTimestep/, 'H7 totp replay protection'],
