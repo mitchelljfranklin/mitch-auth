@@ -11,7 +11,7 @@ import { OidcInfoComponent } from '../../../components/oidc-info/oidc-info.compo
 import { MatDialog } from '@angular/material/dialog'
 import { ConfirmComponent } from '../../../dialogs/confirm/confirm.component'
 import type { ClientResponse } from '@shared/api-response/ClientResponse'
-import { TranslatePipe } from '@ngx-translate/core'
+import { TranslatePipe, TranslateService } from '@ngx-translate/core'
 import type { Observable } from 'rxjs'
 import { TableService } from '../../../services/table.service'
 
@@ -19,6 +19,7 @@ export type TableColumn<T> = {
   columnDef: keyof T & string
   header: string
   isIcon?: boolean
+  isImage?: boolean
   cell: (element: T) => string | Observable<unknown>
 }
 
@@ -36,6 +37,12 @@ export class ClientsComponent implements AfterViewInit {
   readonly sort = viewChild.required(MatSort)
 
   columns: TableColumn<ClientResponse>[] = [
+    {
+      columnDef: 'logo_uri',
+      header: '',
+      isImage: true,
+      cell: element => element.logo_uri ?? '',
+    },
     {
       columnDef: 'client_name',
       header: 'Name',
@@ -56,6 +63,7 @@ export class ClientsComponent implements AfterViewInit {
   displayedColumns = this.columns.map(c => c.columnDef).concat('actions')
 
   private adminService = inject(AdminService)
+  private translateService = inject(TranslateService)
   private snackbarService = inject(SnackbarService)
   private spinnerService = inject(SpinnerService)
   private dialog = inject(MatDialog)
@@ -80,12 +88,22 @@ export class ClientsComponent implements AfterViewInit {
     }
   }
 
+  resizeLogo(event: Event, targetSize: number) {
+    const image = event.currentTarget
+    if (!(image instanceof HTMLImageElement)) {
+      return
+    }
+    const scale = targetSize / Math.max(image.naturalWidth, image.naturalHeight)
+    image.style.width = `${String(Math.ceil(image.naturalWidth * scale))}px`
+    image.style.height = `${String(Math.ceil(image.naturalHeight * scale))}px`
+  }
+
   onDelete(client_id: string) {
     const client = this.dataSource.data.find(c => c.client_id === client_id)
     const dialogRef = this.dialog.open(ConfirmComponent, {
       data: {
-        message: `Are you sure you want to remove app '${client?.client_name ?? client_id}'?`,
-        header: 'Delete',
+        message: String(this.translateService.instant('admin.clients.dialogs.delete', { name: client?.client_name ?? client_id })),
+        header: String(this.translateService.instant('admin.common.actions.delete')),
       },
     })
 
@@ -98,9 +116,11 @@ export class ClientsComponent implements AfterViewInit {
         this.spinnerService.show()
         await this.adminService.deleteClient(client_id)
         this.dataSource.data = this.dataSource.data.filter(c => c.client_id !== client_id)
-        this.snackbarService.message(`App ${client?.client_name ?? client_id} was deleted.`)
+        this.snackbarService.message(
+          String(this.translateService.instant('admin.clients.messages.deleted', { name: client?.client_name ?? client_id })),
+        )
       } catch (_e) {
-        this.snackbarService.error('Could not delete app.')
+        this.snackbarService.error(String(this.translateService.instant('admin.clients.messages.delete-failed')))
       } finally {
         this.spinnerService.hide()
       }
