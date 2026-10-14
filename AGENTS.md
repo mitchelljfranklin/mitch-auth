@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Fork of [voidauth/voidauth](https://github.com/voidauth/voidauth) — an SSO/OIDC provider. Express 5 + TypeScript ESM backend in `server/`, serving an Angular 22 SPA built from `frontend/` (separate npm install). Shared types live in `shared/`, imported by both sides via the `@shared/*` path alias. Knex over PostgreSQL or SQLite. Fork additions: LDAP Directory Sync (`server/ldap/`) and DB-backed runtime Admin Settings.
+Fork of [voidauth/voidauth](https://github.com/voidauth/voidauth) — an SSO/OIDC provider, rebranded **Mitch-Auth** on this fork. Express 5 + TypeScript ESM backend in `server/`, serving an Angular 22 SPA built from `frontend/` (separate npm install). Shared types live in `shared/`, imported by both sides via the `@shared/*` path alias. Knex over PostgreSQL or SQLite. Fork additions: LDAP Directory Sync (`server/ldap/`) and DB-backed runtime Admin Settings.
 
 ## Branch structure (fork)
 
@@ -27,10 +27,12 @@ When upstream's `Dockerfile` changes, mirror it into `Dockerfile.fork` (only the
 - `Dockerfile.fork` — public `node:24-alpine3.22` instead of private `dhi.io/node:24-alpine3.22`
 - `.github/workflows/release-fork.yml` — multi-arch build/push to `ghcr.io/mitchelljfranklin/mitch-auth`
 - `.github/workflows/docs-fork.yml` — VitePress build → GitHub Pages (triggers on any push to `mitch-auth` touching `docs/**`)
+- `.github/workflows/upstream-drift.yml` — weekly job that opens/refreshes a GitHub issue when `upstream/main` is ahead of `origin/main`
 - `compose.fork.yml` — fork GHCR image, exposes LDAP port 3890
 - `.github/README.md` (fork landing page; root `README.md` stays upstream-clean), `SECURITY.md`, issue templates, PR template
 - `docs/.vitepress/`, `docs/index.md`, `docs/welcome.md`, `docs/package.json` (VitePress replaces upstream Docsify)
-- `CHANGELOG.md`
+- `CHANGELOG.md`, `RELEASE-NOTES.md` (root `RELEASE-NOTES.md` is fork-owned — upstream has neither; release notes live here, not in upstream files)
+- `FORK.md` (divergence manifest + merge playbook), `AGENTS.md`, `scripts/`, `test/`
 
 CI note: upstream workflows (`release.yml`, `test.yml`) need `DOCKERHUB_TOKEN` / `dhi.io` logins this fork lacks — ignore their failures; use `release-fork.yml`.
 
@@ -49,27 +51,32 @@ npm start                         # backend + frontend watch, localhost:3000
 Migrations run automatically at startup (`db.migrate.latest()` in `server/db/connection.ts`). Create new ones with `npx knex migrate:make <name>` → timestamped `.ts` file in `migrations/`.
 
 ```bash
-npm run lint          # eslint (root tsconfig covers server/, shared/, migrations/, test/)
+npm run lint          # eslint (root tsconfig covers server/, shared/, migrations/, test/; frontend linted separately)
 npx tsc               # typecheck
 npm run server:build  # madge circular check (any cycle aborts), then esbuild → dist/index.mjs
+npm run prettier      # prettier --write "**/*" (matches pre-commit lint-staged formatting)
 cd frontend && npm run build   # Angular production build
 ```
 
 Fork tooling:
 
 - `npm run fork:check` — asserts every intentional fork divergence (see `FORK.md`) is still present; run after every upstream merge.
-- `npm run seams:apply` — re-inserts fork seams (single-line hooks in upstream-owned files) after resolving shared-file conflicts with `git checkout --theirs`; registry lives in `scripts/fork-seams.mjs`.
+- `npm run seams:apply` — re-inserts fork seams (single-line hooks in upstream-owned files) after resolving shared-file conflicts with `git checkout --theirs`; registry lives in `scripts/fork-seams.mjs`. A `STALE` seam means the anchor moved upstream — re-apply by hand and update the anchor.
 - `npm run i18n:normalize [--check]` — canonicalizes `en-US.json` formatting to prevent merge conflicts.
-- `npm run test:totp` / `npm run test:ldap-sync` — integration harnesses in `test/` (need the throwaway Postgres from `test/README.md`).
+- `npm run base:set [-- <sha> <date> <notes>]` — records the merged upstream base in `FORK.md` + `CHANGELOG.md`; refuses a sha that isn't an ancestor of HEAD.
+- `npm run test:totp` / `npm run test:ldap-sync` — integration harnesses in `test/`; both need a throwaway Postgres on **localhost:5433** (`test/README.md`).
+- `npm run test:ldap-guard` — LDAP bind-backoff/connection-cap harness (H2); pure in-memory, no database needed.
 - `scripts/smoke.ps1 -Image <tag>` — runtime smoke test of a built image.
 
 ## Upstream merges
 
 Follow the playbook in `FORK.md`: it lists every intentional fork divergence (hardening fixes H1-H16, fork features F1-F3), the known re-apply hotspots, and the post-merge verification steps. Required per clone: `git config merge.ours.driver true`.
 
+The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstream/main` moves ahead of `origin/main`; the merge's final step is `npm run base:set`. `SECURITY.md` (fork-owned, `merge=ours`-protected) is the authoritative record of the MFA/threat model — keep it in sync with behavior changes.
+
 ### Verification reality check
 
-- There are **no unit tests** anywhere (zero spec files; `ng test` has nothing to run). The CI "Test" workflow is just a multi-arch Docker build whose Dockerfile runs `npx tsc`, `npx eslint ./`, and both production builds.
+- There are **no unit tests** anywhere (zero spec files; `ng test` has nothing to run). The frontend *is* wired for vitest via `@angular/build:unit-test` in `frontend/angular.json`, so new `frontend/src/**/*.spec.ts` files run with `cd frontend && npm test` — but nothing exists yet. The CI "Test" workflow is just a multi-arch Docker build whose Dockerfile runs `npx tsc`, `npx eslint ./`, and both production builds.
 - Local equivalent: `npx tsc && npx eslint ./` plus `npm run server:build`; add `cd frontend && npm run build` for frontend changes.
 - **Run `npx tsc` before pushing server changes.** `server:build` bundles via esbuild and skips strict type checks — type errors only surface later in Dockerfile CI.
 - Circular imports under `server/` abort the build (madge step in `esbuild.config.ts`).
@@ -78,7 +85,7 @@ Follow the playbook in `FORK.md`: it lists every intentional fork divergence (ha
 
 - No stubs, TODOs, dead or commented-out code. Intentional empty states must be clearly labelled.
 - Types explicit: no `any` at exported boundaries (use `unknown` + narrowing). Validate all external input with zod.
-- Documentation stays current for user-visible/fork changes: `.github/README.md`, `docs/welcome.md`, `docs/index.md`, `docs/Configuration.md`, `CHANGELOG.md`.
+- Documentation stays current for user-visible/fork changes: `.github/README.md`, `docs/welcome.md`, `docs/index.md`, `docs/Configuration.md`, `CHANGELOG.md`, `RELEASE-NOTES.md`.
 
 ## Code style
 
@@ -92,7 +99,7 @@ Follow the playbook in `FORK.md`: it lists every intentional fork divergence (ha
 - `postinstall` runs husky; pre-commit hook runs lint-staged (prettier + eslint --fix) on staged files.
 - Upstream `Dockerfile` requires a `dhi.io` login — build locally with `Dockerfile.fork`.
 - Releases must be multi-arch `linux/amd64,linux/arm64` (ARM64/Portainer deployments).
-- `server/index.ts` is a yargs CLI (`serve` default, `migrate` for cross-DB moves, `generate password-reset|random`). It sets env vars *before* dynamically importing express/oidc-provider — don't convert those dynamic imports to static ones in that file.
+- `server/index.ts` is a yargs CLI: `serve` (default), `migrate` (cross-DB moves), `generate password-reset|random`, `user mfa enable|disable`, `user password-reset`. It sets env vars *before* dynamically importing express/oidc-provider — don't convert those dynamic imports to static ones in that file.
 - `server/oidc/provider.ts` exports `provider` as a **factory function** — call `provider()`, never `provider.proxy`/`provider.Client` on the import itself. Client-secrets, sessions and TOTP secrets are AES-256-GCM encrypted at rest; `TRUSTED_PROXIES` (upstream) configures per-proxy trust for rate limiting.
 
 ## Frontend gotchas
