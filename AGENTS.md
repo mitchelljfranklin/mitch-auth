@@ -64,6 +64,7 @@ Fork tooling:
 - `npm run fork:check` — asserts every intentional fork divergence (see `FORK.md`) is still present; run after every upstream merge.
 - `npm run seams:apply` — re-inserts fork seams (single-line hooks in upstream-owned files) after resolving shared-file conflicts with `git checkout --theirs`; registry lives in `scripts/fork-seams.mjs`. A `STALE` seam means the anchor moved upstream — re-apply by hand and update the anchor.
 - `npm run i18n:normalize [--check]` — canonicalizes `en-US.json` formatting to prevent merge conflicts.
+- `npm run docs:drift [-- --base <sha>] [--check]` — lists upstream changes to `merge=ours` docs/templates since the recorded base (they are dropped silently on merge), and flags env vars documented upstream but missing from `docs/Configuration.md`.
 - `npm run base:set [-- <sha> <date> <notes>]` — records the merged upstream base in `FORK.md` + `CHANGELOG.md`; refuses a sha that isn't an ancestor of HEAD.
 - `npm run lockfiles:regen` — takes upstream's lockfiles and regenerates both from the unioned manifests (run after resolving `package.json`).
 - `npm run test:integration` — boots a throwaway Postgres, runs all harnesses (`test:ldap-guard`, `test:totp`, `test:ldap-sync`), tears it down.
@@ -99,6 +100,7 @@ The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstrea
 ## Gotchas
 
 - `npm ci` fails if a dependency isn't in the lockfile — after adding deps run `npm install --package-lock-only` first (root and/or `frontend/`).
+- `.nvmrc`/`.node-version` pin Node 24.18.0 (the `engines` floor). Local Node must satisfy Angular's `^24.15.0` floor or `cd frontend && npm run build` refuses to run; run `nvm use` first.
 - `postinstall` runs husky; pre-commit hook runs lint-staged (prettier + eslint --fix) on staged files.
 - Upstream `Dockerfile` requires a `dhi.io` login — build locally with `Dockerfile.fork`.
 - Releases must be multi-arch `linux/amd64,linux/arm64` (ARM64/Portainer deployments).

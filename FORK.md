@@ -12,7 +12,7 @@ gh repo set-default mitchelljfranklin/mitch-auth   # with two remotes gh otherwi
 
 ## Fork-only files (upstream never has these)
 
-`Dockerfile.fork`, `compose.fork.yml`, `.github/workflows/release-fork.yml`, `.github/workflows/docs-fork.yml`, `.github/workflows/upstream-drift.yml`, `.github/workflows/verify-fork.yml`, `.github/README.md`, `SECURITY.md`, `CHANGELOG.md`, `AGENTS.md`, `FORK.md`, `docs/.vitepress/`, `docs/package.json`, `docs/index.md`, `docs/welcome.md`, `docs/LDAP-Sync.md`, `server/ldap/sync.ts`, `server/ldap/hardening.ts`, `server/cli/index-html.ts`, `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `test/`, `scripts/`, `migrations/20260825000000_totp_last_used_timestep.ts`
+`Dockerfile.fork`, `compose.fork.yml`, `.github/workflows/release-fork.yml`, `.github/workflows/docs-fork.yml`, `.github/workflows/upstream-drift.yml`, `.github/workflows/verify-fork.yml`, `.github/README.md`, `SECURITY.md`, `CHANGELOG.md`, `AGENTS.md`, `FORK.md`, `.nvmrc`, `.node-version`, `docs/.vitepress/`, `docs/package.json`, `docs/index.md`, `docs/welcome.md`, `docs/LDAP-Sync.md`, `server/ldap/sync.ts`, `server/ldap/hardening.ts`, `server/cli/index-html.ts`, `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `test/`, `scripts/`, `migrations/20260825000000_totp_last_used_timestep.ts`
 
 `README.md` (root) intentionally stays upstream-clean.
 
@@ -57,7 +57,7 @@ gh repo set-default mitchelljfranklin/mitch-auth   # with two remotes gh otherwi
 8. **Integration**: `npm run test:integration` boots the throwaway Postgres from `test/README.md`, runs `test:ldap-guard`, `test:totp` and `test:ldap-sync`, and tears it down — all assertions must pass.
 9. **Build**: `npx tsc && npx eslint ./ && npm run server:build`; frontend AOT build happens inside the Docker build (local Node may be below Angular's floor).
 10. **Runtime smoke**: build the image and run `scripts/smoke.ps1 -Image <tag>` — all checks must pass.
-11. **Post-merge**: run `npm run base:set` (or `node scripts/set-base.mjs <sha> <date> <notes>`) to record the new upstream base in FORK.md and CHANGELOG.md; mirror any upstream `Dockerfile` changes into `Dockerfile.fork`; update this manifest if divergences changed; cherry-pick valuable upstream docs changes into the fork docs (they are `merge=ours`-protected, so they do not land automatically).
+11. **Post-merge**: run `npm run base:set` (or `node scripts/set-base.mjs <sha> <date> <notes>`) to record the new upstream base in FORK.md and CHANGELOG.md; mirror any upstream `Dockerfile` changes into `Dockerfile.fork`; update this manifest if divergences changed; review upstream docs changes with `npm run docs:drift` and cherry-pick them (docs are `merge=ours`-protected, so they do not land automatically).
 
 ## History
 

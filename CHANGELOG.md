@@ -38,6 +38,8 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 - `npm run test:integration` — boots a throwaway Postgres, runs `test:ldap-guard` + `test:totp` + `test:ldap-sync`, tears it down
 - `.github/workflows/verify-fork.yml` — fork CI on pushes/PRs to `mitch-auth` (`tsc`, `eslint`, `server:build`, `fork:check`, i18n check, AOT build, integration harnesses), since upstream's `test.yml` needs a dhi.io login and `release-fork.yml` only runs on a published Release
 - `npm run i18n:normalize [--check]` — canonicalizes `en-US.json` formatting to keep i18n merges content-only
+- `npm run docs:drift` — lists upstream changes to `merge=ours` docs/templates since the recorded base (they are dropped silently on merge) and flags env vars documented upstream but missing from the fork's `Configuration.md`
+- `.nvmrc` / `.node-version` — pin Node 24.18.0 (the `engines` floor; Angular's production build needs >=24.15)
 - `npm run test:totp` / `npm run test:ldap-sync` — integration harnesses in `test/` (real DB; they previously caught the weak-password and `user_group.id` bugs)
 - `scripts/smoke.ps1` — runtime smoke test of a built image (base href, CSP mirroring, gated routes, migrations)
 - `.github/workflows/upstream-drift.yml` — weekly check that opens an issue when upstream `main` has commits not yet absorbed by `mitch-auth`, to keep syncs small and frequent

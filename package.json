@@ -20,6 +20,7 @@
     "seams:apply": "node scripts/apply-seams.mjs",
     "base:set": "node scripts/set-base.mjs",
     "lockfiles:regen": "node scripts/regen-lockfiles.mjs",
+    "docs:drift": "node scripts/docs-drift.mjs",
     "test:integration": "node scripts/run-integration.mjs",
     "test:ldap-guard": "tsx test/ldap-bind-guard.ts"
   },
