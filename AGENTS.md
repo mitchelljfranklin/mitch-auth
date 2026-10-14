@@ -24,10 +24,11 @@ When upstream's `Dockerfile` changes, mirror it into `Dockerfile.fork` (only the
 
 ## Fork-specific files (never upstream)
 
-- `Dockerfile.fork` — public `node:24-alpine3.22` instead of private `dhi.io/node:24-alpine3.22`
+- `Dockerfile.fork` — public `node:24-alpine` instead of private `dhi.io/node:24-alpine`
 - `.github/workflows/release-fork.yml` — multi-arch build/push to `ghcr.io/mitchelljfranklin/mitch-auth`
 - `.github/workflows/docs-fork.yml` — VitePress build → GitHub Pages (triggers on any push to `mitch-auth` touching `docs/**`)
-- `.github/workflows/upstream-drift.yml` — weekly job that opens/refreshes a GitHub issue when `upstream/main` is ahead of `origin/main`
+- `.github/workflows/upstream-drift.yml` — weekly job that opens/refreshes a GitHub issue when `upstream/main` is ahead of the fork branch (`mitch-auth`)
+- `.github/workflows/verify-fork.yml` — fork CI on pushes/PRs to `mitch-auth`: `tsc`, `eslint`, `server:build`, `fork:check`, i18n check, AOT build, integration harnesses (upstream's `test.yml` needs a dhi.io login)
 - `compose.fork.yml` — fork GHCR image, exposes LDAP port 3890
 - `.github/README.md` (fork landing page; root `README.md` stays upstream-clean), `SECURITY.md`, issue templates, PR template
 - `docs/.vitepress/`, `docs/index.md`, `docs/welcome.md`, `docs/package.json` (VitePress replaces upstream Docsify)
@@ -64,6 +65,8 @@ Fork tooling:
 - `npm run seams:apply` — re-inserts fork seams (single-line hooks in upstream-owned files) after resolving shared-file conflicts with `git checkout --theirs`; registry lives in `scripts/fork-seams.mjs`. A `STALE` seam means the anchor moved upstream — re-apply by hand and update the anchor.
 - `npm run i18n:normalize [--check]` — canonicalizes `en-US.json` formatting to prevent merge conflicts.
 - `npm run base:set [-- <sha> <date> <notes>]` — records the merged upstream base in `FORK.md` + `CHANGELOG.md`; refuses a sha that isn't an ancestor of HEAD.
+- `npm run lockfiles:regen` — takes upstream's lockfiles and regenerates both from the unioned manifests (run after resolving `package.json`).
+- `npm run test:integration` — boots a throwaway Postgres, runs all harnesses (`test:ldap-guard`, `test:totp`, `test:ldap-sync`), tears it down.
 - `npm run test:totp` / `npm run test:ldap-sync` — integration harnesses in `test/`; both need a throwaway Postgres on **localhost:5433** (`test/README.md`).
 - `npm run test:ldap-guard` — LDAP bind-backoff/connection-cap harness (H2); pure in-memory, no database needed.
 - `scripts/smoke.ps1 -Image <tag>` — runtime smoke test of a built image.

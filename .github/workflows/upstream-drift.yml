@@ -25,10 +25,14 @@ jobs:
 
       - name: Count new upstream commits
         id: drift
+        # Drift is measured against the checked-out fork branch (mitch-auth), not
+        # origin/main. The playbook pushes the main mirror (step 1) before
+        # mitch-auth absorbs upstream, so origin/main catches up too early to be
+        # the signal that the fork is actually up to date.
         run: |
-          COUNT=$(git rev-list --count origin/main..upstream/main)
+          COUNT=$(git rev-list --count HEAD..upstream/main)
           echo "COUNT=${COUNT}" >> ${GITHUB_ENV}
-          git log --oneline origin/main..upstream/main | head -30 > commits.txt || true
+          git log --oneline HEAD..upstream/main | head -30 > commits.txt || true
 
       - name: Close resolved drift issues
         if: env.COUNT == '0'
@@ -65,7 +69,7 @@ jobs:
             gh issue close "${OLD}" --comment "Superseded; count changed."
           fi
           {
-            echo "Upstream \`voidauth/main\` is **${COUNT} commit(s) ahead** of our mirror (\`origin/main\`)."
+            echo "Upstream \`voidauth/main\` is **${COUNT} commit(s) ahead** of the fork branch (\`mitch-auth\`)."
             echo ""
             echo "## New commits"
             echo '```'

@@ -1,0 +1,61 @@
+name: Verify Fork
+
+# Fork-owned verification. Upstream's test.yml needs a dhi.io login this fork
+# lacks, and release-fork.yml only runs on a published Release, so without this
+# workflow nothing checks pushes/PRs to the deployed branch.
+# Mirrors the local gate: npx tsc && npx eslint ./ + server:build + fork:check.
+
+on:
+  push:
+    branches: [mitch-auth]
+  pull_request:
+    branches: [mitch-auth]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-fork-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Typecheck
+        run: npx tsc
+
+      - name: Lint
+        run: npx eslint ./
+
+      - name: Build server bundle (madge circular check + esbuild)
+        run: npm run server:build
+
+      - name: Fork divergence check
+        run: npm run fork:check
+
+      - name: i18n formatting check
+        run: npm run i18n:normalize -- --check
+
+      - name: Frontend production build (AOT)
+        run: npm run build
+        working-directory: frontend
+
+      - name: Integration harnesses (throwaway Postgres)
+        run: npm run test:integration

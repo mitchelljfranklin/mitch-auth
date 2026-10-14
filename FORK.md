@@ -7,11 +7,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth) on br
 ```bash
 git config merge.ours.driver true   # activates merge=ours for docs/*, SECURITY.md, issue/PR templates
 git remote add upstream https://github.com/voidauth/voidauth.git
+gh repo set-default mitchelljfranklin/mitch-auth   # with two remotes gh otherwise targets upstream's issue tracker
 ```
 
 ## Fork-only files (upstream never has these)
 
-`Dockerfile.fork`, `compose.fork.yml`, `.github/workflows/release-fork.yml`, `.github/workflows/docs-fork.yml`, `.github/workflows/upstream-drift.yml`, `.github/README.md`, `SECURITY.md`, `CHANGELOG.md`, `AGENTS.md`, `FORK.md`, `docs/.vitepress/`, `docs/package.json`, `docs/index.md`, `docs/welcome.md`, `docs/LDAP-Sync.md`, `server/ldap/sync.ts`, `server/ldap/hardening.ts`, `server/cli/index-html.ts`, `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `test/`, `scripts/`, `migrations/20260825000000_totp_last_used_timestep.ts`
+`Dockerfile.fork`, `compose.fork.yml`, `.github/workflows/release-fork.yml`, `.github/workflows/docs-fork.yml`, `.github/workflows/upstream-drift.yml`, `.github/workflows/verify-fork.yml`, `.github/README.md`, `SECURITY.md`, `CHANGELOG.md`, `AGENTS.md`, `FORK.md`, `docs/.vitepress/`, `docs/package.json`, `docs/index.md`, `docs/welcome.md`, `docs/LDAP-Sync.md`, `server/ldap/sync.ts`, `server/ldap/hardening.ts`, `server/cli/index-html.ts`, `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `test/`, `scripts/`, `migrations/20260825000000_totp_last_used_timestep.ts`
 
 `README.md` (root) intentionally stays upstream-clean.
 
@@ -48,12 +49,12 @@ git remote add upstream https://github.com/voidauth/voidauth.git
 
 1. **Pre-flight**: `git fetch upstream` → `git log --oneline <base>..upstream/main` → `git diff --stat <base>..upstream/main -- server/ shared/ frontend/src/ Dockerfile package.json`. Confirm this manifest is current.
 2. **Branch**: work on an `upstream-sync` branch off `mitch-auth`; `git merge main`.
-3. **Resolve shared-file conflicts by taking upstream's side wholesale**: for any conflicted file listed in `scripts/fork-seams.mjs` run `git checkout --theirs <file>`, then `npm run seams:apply` re-inserts all fork seams. A `STALE` result means upstream reshaped a seam region — re-apply that seam by hand and update its anchor in `scripts/fork-seams.mjs`. Non-seam files (fork-owned files, and the owned-file divergences below) resolve manually.
+3. **Resolve shared-file conflicts by taking upstream's side wholesale**: resolve `package.json` first (a union — see step 6), because while it carries conflict markers `npm run` cannot parse it. Then for any conflicted file listed in `scripts/fork-seams.mjs` run `git checkout --theirs <file>`, then re-insert fork seams with `node scripts/apply-seams.mjs` (identical to `npm run seams:apply`, but runnable before `package.json` is JSON-valid). A `STALE` result means upstream reshaped a seam region — re-apply that seam by hand and update its anchor in `scripts/fork-seams.mjs`. Non-seam files (fork-owned files, and the owned-file divergences below) resolve manually.
 4. **Retired divergences**: if upstream now implements something we forked, remove the fork version everywhere (code, switch case, docs) and delete the manifest row. Retired so far: `TRUST_PROXY` (superseded by upstream `TRUSTED_PROXIES`), base-href trailing slash (upstream fixed).
 5. **i18n**: for `frontend/public/i18n/en-US.json` conflicts, take upstream's file wholesale, then re-add fork-only keys (currently the `admin.settings.*` / `admin.common.actions.save` / `app.navigation.admin.settings` trees). Watch for upstream reshaping shared keys into `{label, tooltip}` objects — those win; check no fork component still references the flat key. Then `npm run i18n:normalize`.
-6. **Lockfiles**: `package.json` is a union (fork: `ldapts`, `strict-event-emitter-types`; upstream: everything else). Run `npm install --package-lock-only` in root and `frontend/`, then full `npm install` in both.
+6. **Lockfiles**: `package.json` is a union (fork: `ldapts`, `strict-event-emitter-types`; upstream: everything else). `npm run lockfiles:regen` (or `node scripts/regen-lockfiles.mjs`) takes upstream's lockfiles and regenerates both from the unioned manifests; then run a full `npm install` in root and `frontend/`.
 7. **Semantic sweep**: `npm run fork:check` — every seam and owned-file divergence must be present. Fix anything that silently dropped.
-8. **Integration**: start Postgres per `test/README.md`, run `npm run test:totp` and `npm run test:ldap-sync` — all assertions must pass.
+8. **Integration**: `npm run test:integration` boots the throwaway Postgres from `test/README.md`, runs `test:ldap-guard`, `test:totp` and `test:ldap-sync`, and tears it down — all assertions must pass.
 9. **Build**: `npx tsc && npx eslint ./ && npm run server:build`; frontend AOT build happens inside the Docker build (local Node may be below Angular's floor).
 10. **Runtime smoke**: build the image and run `scripts/smoke.ps1 -Image <tag>` — all checks must pass.
 11. **Post-merge**: run `npm run base:set` (or `node scripts/set-base.mjs <sha> <date> <notes>`) to record the new upstream base in FORK.md and CHANGELOG.md; mirror any upstream `Dockerfile` changes into `Dockerfile.fork`; update this manifest if divergences changed; cherry-pick valuable upstream docs changes into the fork docs (they are `merge=ours`-protected, so they do not land automatically).

@@ -33,11 +33,14 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 - **Fork logic extracted into fork-owned modules** — `server/cli/index-html.ts` (escaping, CSP mirror, asset-404 guard), `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `server/ldap/hardening.ts` (bind backoff, connection cap, idle timeout) — so upstream-hot files (`server.ts`, `provider.ts`, `interaction.ts`, `email.ts`, `api.ts`, `ldap/server.ts`) carry only single-line seams
 - `scripts/fork-seams.mjs` + `npm run seams:apply` — after a merge, shared-file conflicts resolve with `git checkout --theirs` + one command that re-inserts all fork seams (idempotent; stale anchors fail loudly)
 - `FORK.md` — authoritative fork-divergence manifest (H1-H16 hardening fixes, F1-F3 fork features) and upstream merge playbook
-- `npm run fork:check` — post-merge semantic sweep asserting all divergences are still present (also catches `Dockerfile.fork` drift from upstream `Dockerfile` changes)
+- `npm run fork:check` — post-merge semantic sweep asserting all divergences are still present (also catches `Dockerfile.fork` drift from upstream `Dockerfile` changes); now also guards the fork-owned modules (H9/H10/H11/H12/H13/F2), the fork-only i18n keys, and cp1252 mojibake in docs/i18n
+- `npm run lockfiles:regen` — regenerates both lockfiles from the unioned `package.json` after a merge
+- `npm run test:integration` — boots a throwaway Postgres, runs `test:ldap-guard` + `test:totp` + `test:ldap-sync`, tears it down
+- `.github/workflows/verify-fork.yml` — fork CI on pushes/PRs to `mitch-auth` (`tsc`, `eslint`, `server:build`, `fork:check`, i18n check, AOT build, integration harnesses), since upstream's `test.yml` needs a dhi.io login and `release-fork.yml` only runs on a published Release
 - `npm run i18n:normalize [--check]` — canonicalizes `en-US.json` formatting to keep i18n merges content-only
 - `npm run test:totp` / `npm run test:ldap-sync` — integration harnesses in `test/` (real DB; they previously caught the weak-password and `user_group.id` bugs)
 - `scripts/smoke.ps1` — runtime smoke test of a built image (base href, CSP mirroring, gated routes, migrations)
-- `.github/workflows/upstream-drift.yml` — weekly check that opens an issue when upstream `main` gains commits, to keep syncs small and frequent
+- `.github/workflows/upstream-drift.yml` — weekly check that opens an issue when upstream `main` has commits not yet absorbed by `mitch-auth`, to keep syncs small and frequent
 
 #### Security
 

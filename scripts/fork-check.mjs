@@ -47,6 +47,14 @@ const checks = [
   ['frontend/src/app/pages/admin/emails/emails.component.ts', /sandbox=""/, 'H14 email preview iframe sandbox'],
   ['frontend/src/app/services/auth.service.ts', /e\.status === 0/, 'H15 opaque redirect handled as success'],
   ['frontend/src/app/pages/mfa/mfa.component.ts', /replaceUrl: true/, 'H16 deterministic MFA cancel'],
+  ['server/util/redact.ts', /redactChallenges/, 'H9 email body redaction helper'],
+  ['server/util/rateLimit.ts', /basicAuthRateLimit/, 'H10 basic-auth rate limiter'],
+  ['server/util/rateLimit.ts', /skipSuccessfulRequests/, 'H10 limiter skips successful requests'],
+  ['server/util/login-timing.ts', /timingEqualizedReject/, 'H12 login timing equalization'],
+  ['server/cli/index-html.ts', /extractAngularScriptSrc/, 'H13 CSP script-src mirror helper'],
+  ['server/cli/index-html.ts', /assetNotFoundGuard/, 'H13 asset 404 guard'],
+  ['server/db/settings.ts', /SETTING_/, 'F2 DB-backed settings flag prefix'],
+  ['server/util/config.ts', /applySettingsFromDB/, 'F2 runtime settings apply'],
 ]
 
 // must NOT appear anywhere in these trees
@@ -96,6 +104,45 @@ for (const tree of ['server', 'shared', 'docs', 'frontend/src']) {
       if (content.includes(pattern)) {
         failures.push(`FAIL: ${description} — found '${pattern}' in ${file}`)
       }
+    }
+  }
+}
+
+// ---- F2: fork-only i18n keys must survive i18n merges ----
+function hasPath(object, path) {
+  let current = object
+  for (const part of path.split('.')) {
+    if (current === null || typeof current !== 'object' || !(part in current)) return false
+    current = current[part]
+  }
+  return true
+}
+
+const i18nFile = 'frontend/public/i18n/en-US.json'
+const forkI18nKeys = ['admin.settings', 'admin.common.actions.save', 'app.navigation.admin.settings']
+const i18nRaw = read(i18nFile)
+if (i18nRaw) {
+  try {
+    const i18n = JSON.parse(i18nRaw)
+    for (const key of forkI18nKeys) {
+      if (!hasPath(i18n, key)) {
+        failures.push(`FAIL: F2 i18n key missing after merge: ${key} in ${i18nFile}`)
+      }
+    }
+  } catch (e) {
+    failures.push(`FAIL: ${i18nFile} is not valid JSON: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
+// ---- cp1252 double-encoding ("mojibake") corrupts fork docs/i18n silently ----
+const mojibakePatterns = [
+  /\u00e2\u20ac/, /\u00e2\u0153/, /\u00e2\u2020/, /\u00f0\u0178/, /\u00c2[\u00a0-\u00bf]/,
+]
+for (const tree of ['docs', 'frontend/public/i18n']) {
+  for (const file of walkTree(tree)) {
+    const content = read(file)
+    if (mojibakePatterns.some(pattern => pattern.test(content))) {
+      failures.push(`FAIL: mojibake (cp1252 double-encoding) in ${file} — re-save as UTF-8`)
     }
   }
 }
