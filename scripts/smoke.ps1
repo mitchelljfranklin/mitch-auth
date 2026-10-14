@@ -18,7 +18,6 @@ $storageKey = 'a' * 43
 
 function Assert($name, $ok) {
   if ($ok) { Write-Host "PASS $name" } else { Write-Host "FAIL $name"; $script:failed++ }
-  if (-not $ok) { $script:failed++ }
 }
 
 $script:failed = 0
