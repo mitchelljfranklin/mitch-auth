@@ -42,6 +42,7 @@ const checks = [
   ['server/routes/auth.ts', /await getEmailVerification\(user\.id\)/, 'H6 send_verify_email gating'],
   ['server/db/totp.ts', /lastUsedTimestep/, 'H7 totp replay protection'],
   ['server/db/totp.ts', /totp\.expiresAt != null \? null : timestep/, 'H7 enrollment does not burn timestep'],
+  ['server/db/client.ts', /LOWER\("name"\) IN/, 'H11 case-insensitive client group matching'],
   ['server/db/tableMaintenance.ts', /TTLs\.EMAIL_LOG/, 'H8 email_log purge'],
   ['frontend/src/app/pages/admin/emails/emails.component.ts', /sandbox=""/, 'H14 email preview iframe sandbox'],
   ['frontend/src/app/services/auth.service.ts', /e\.status === 0/, 'H15 opaque redirect handled as success'],

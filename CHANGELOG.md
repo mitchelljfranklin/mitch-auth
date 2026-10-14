@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `aa260a8` | 2026-10-14 |
 | `a1bafc5` | 2026-09-22 |
 | `a9254ca` | 2026-09-22 |
 | `33b826e` | 2026-09-13 |
@@ -20,6 +21,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 #### Upstream sync
 
+- **2026-10-14 sync (33 commits)**: **OIDC App logo upload** — per-client logos stored as content-hashed uploaded assets in `/app/config/uploads` (auto-dedup, randomized filenames; new `uploaded_asset` + `client_logo_asset` tables via migration `20260925309173_uploaded_assets`), with a new **`DISABLE_FILE_UPLOADS`** environment variable to turn all uploads off. Dependency refresh (Angular 22.2, oidc-provider 9.12, `multer` + `sharp` added, `matcher` 7). Upstream `Dockerfile` base image simplified from a digest-pinned `node:24-alpine3.22` to `node:24-alpine` — mirrored into `Dockerfile.fork`. i18n snackbar/confirmation-dialog translations plus a ru-RU theme-label fix. Fork re-application: upstream moved `upsertClient` from `server/oidc/provider.ts` to `server/db/client.ts`, so the H11 case-insensitive client-group matching was re-applied there (now guarded by `fork:check`). Also repaired pre-existing cp1252 mojibake in `docs/Configuration.md` and cherry-picked upstream's new *Uploaded Assets* docs section
 - **2026-09-22 follow-up sync (3 commits)**: **Backchannel logout support** — admin user signout and account deletion now attempt to end client user sessions via backchannel logout. CodeQL action pins aligned (init + analyze at 4.37.9, fixing the version-mismatch workflow failure)
 - **2026-09-22 follow-up sync (31 commits)**: **MFA model rework** — user `mfaRequired` is now authoritative: OIDC App and ProxyAuth MFA enforcement require the user's MFA to be enabled; completing the MFA page permanently enables MFA on the account; admins disabling MFA clears existing TOTP codes; new **MFA CLI commands** (`voidauth users mfa enable|disable`, password-reset moved under `users` with the old command kept); passkeys record user-verification usage (new migration); Sign-Up button moved to the login header; pending OIDC interactions preserved during signup; test-email dialog submit fix; pt-BR translation. Verified coexistence with the fork's TOTP replay protection, lockout, and all hardening seams
 - **2026-08-30 follow-up sync (24 commits)**: ProxyAuth self-access bypass overmatching fix (security), TOTP failed-attempt lockout (10 attempts within a 10-minute window → 10-minute lockout, with countdown UX on the MFA page), oidc-provider client-metadata readonly fix, passkey wording simplification, dependency updates. Upstream's lockout coexists with the fork's TOTP replay protection — lockout is enforced at the route level, replay protection at the timestep level

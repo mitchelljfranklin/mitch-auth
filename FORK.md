@@ -29,7 +29,7 @@ git remote add upstream https://github.com/voidauth/voidauth.git
 | H8 | `server/db/tableMaintenance.ts` | `email_log` retention purge via `TTLs.EMAIL_LOG` | `npm run fork:check` |
 | H9 | `server/util/redact.ts` | `redactChallenges()` strips secrets from stored email bodies; `email.ts` keeps `body: redactChallenges(...)` seams | `npm run fork:check` |
 | H10 | `server/util/rateLimit.ts` | `basicAuthRateLimit` (`skipSuccessfulRequests: true`); `api.ts` keeps seams on `/api/authz/forward-auth` and `/authz/auth-request` | `npm run fork:check` |
-| H11 | `server/util/cors.ts` | `clientBasedCORS` restricted to registered redirect/post-logout origins (wildcards supported); `provider.ts` keeps a one-line seam. Case-insensitive client group matching (`LOWER(...)`) in `upsertClient` | `npm run fork:check` |
+| H11 | `server/util/cors.ts`, `server/db/client.ts` | `clientBasedCORS` restricted to registered redirect/post-logout origins (wildcards supported); `provider.ts` keeps a one-line seam. Case-insensitive client group matching (`LOWER("name") IN (...)`) in `upsertClient` (upstream moved `upsertClient` from `server/oidc/provider.ts` to `server/db/client.ts`; re-apply there on merge) | `npm run fork:check` |
 | H12 | `server/util/login-timing.ts` | `timingEqualizedReject` equalizes login timing for unknown usernames; `interaction.ts` keeps a one-line seam | `npm run fork:check` |
 | H13 | `server/cli/index-html.ts` | HTML-escaping helpers, CSP `script-src` mirror (`extractAngularScriptSrc`), asset-404 guard; `server.ts` keeps seams (title/logo escaping, CSP header, guard). Note: base-href trailing slash **retired** — upstream fixed it | `npm run fork:check` |
 | H14 | `frontend/src/app/pages/admin/emails/emails.component.ts` | Email preview iframe `sandbox=""` | `npm run fork:check` |
@@ -62,6 +62,7 @@ git remote add upstream https://github.com/voidauth/voidauth.git
 
 | Upstream base | Merged on | Notes |
 |---|---|---|
+| `aa260a8` | 2026-10-14 |  |
 | `a1bafc5` | 2026-09-22 |  |
 | `a9254ca` | 2026-09-22 |  |
 | `33b826e` | 2026-09-13 |  |
