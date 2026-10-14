@@ -52,6 +52,10 @@ async function pendingSecret(userId: string): Promise<string> {
 
 // ---- scenario 1: enrollment then immediate login in the same window ----
 const realNow = Date.now
+// Anchor mocked offsets to a TOTP window boundary so the window arithmetic in
+// scenarios 2-3 is deterministic. Basing offsets on real time made scenario 3
+// fail whenever `realNow % 30s == 28` (a ~1/30 flake).
+const windowBase = Math.floor(realNow() / 30_000) * 30_000
 const user1 = await createUser()
 const { secret } = await createTOTP(user1, 'tester99')
 const totp = new OTPAuth.TOTP({ secret })
@@ -71,17 +75,17 @@ check('login records timestep', typeof row1b?.lastUsedTimestep, 'number')
 check('same-window login replay rejected', await validateTOTP(user1, code0), false)
 
 // ---- scenario 2: next window accepts fresh code, rejects reuse ----
-Date.now = () => realNow() + 31_000
+Date.now = () => windowBase + 31_000
 const code1 = totp.generate({ timestamp: Date.now() })
 check('next-window fresh code accepted', await validateTOTP(user1, code1), true)
-Date.now = () => realNow() + 32_000
+Date.now = () => windowBase + 32_000
 check('previous-window replay rejected', await validateTOTP(user1, code1), false)
 
 // ---- scenario 3: one-window-old code on first use still accepted (clock skew tolerance) ----
 const user2 = await createUser()
 await createTOTP(user2, 'late-user')
-Date.now = () => realNow() + 62_000
-const prevWindowCode = new OTPAuth.TOTP({ secret: await pendingSecret(user2) }).generate({ timestamp: realNow() + 31_000 })
+Date.now = () => windowBase + 62_000
+const prevWindowCode = new OTPAuth.TOTP({ secret: await pendingSecret(user2) }).generate({ timestamp: windowBase + 31_000 })
 check('one-window-old code accepted on first use', await validateTOTP(user2, prevWindowCode), true)
 
 Date.now = realNow
