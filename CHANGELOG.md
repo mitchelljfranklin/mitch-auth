@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `c82c4c2` | 2026-10-19 |
 | `aa260a8` | 2026-10-14 |
 | `a1bafc5` | 2026-09-22 |
 | `a9254ca` | 2026-09-22 |
@@ -21,6 +22,8 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 #### Upstream sync
 
+- **2026-10-19 sync (18 commits)**: **Skip passkey prompt** — new per-user `skipPasskeyPrompt` (migration `20261016142429_skip_passkey_prompt`, NOT NULL), `PATCH /interaction/passkey-prompt`, exposed on `/user/me` + `/interaction/exists`, plus a `paginator-intl` service for localized paginator labels. Upstream refactored proxy-auth basic auth into `server/util/userMiddleware.ts` (`getUserByBasicAuth`) with its own failure rate limiter — this **supersedes fork H10**, so `basicAuthRateLimit` and its two `api.ts` seams were retired (`FORK.md` updated). Build tooling switched from **Madge to dpdm** for circular-dependency detection and pinned **TypeScript 6**; dependency refresh. i18n translated table headers, paginator and admin page titles (en-US now 550 keys). Test harnesses updated to supply the new NOT NULL `skipPasskeyPrompt` column
+
 - **2026-10-14 sync (33 commits)**: **OIDC App logo upload** — per-client logos stored as content-hashed uploaded assets in `/app/config/uploads` (auto-dedup, randomized filenames; new `uploaded_asset` + `client_logo_asset` tables via migration `20260925309173_uploaded_assets`), with a new **`DISABLE_FILE_UPLOADS`** environment variable to turn all uploads off. Dependency refresh (Angular 22.2, oidc-provider 9.12, `multer` + `sharp` added, `matcher` 7). Upstream `Dockerfile` base image simplified from a digest-pinned `node:24-alpine3.22` to `node:24-alpine` — mirrored into `Dockerfile.fork`. i18n snackbar/confirmation-dialog translations plus a ru-RU theme-label fix. Fork re-application: upstream moved `upsertClient` from `server/oidc/provider.ts` to `server/db/client.ts`, so the H11 case-insensitive client-group matching was re-applied there (now guarded by `fork:check`). Also repaired pre-existing cp1252 mojibake in `docs/Configuration.md` and cherry-picked upstream's new *Uploaded Assets* docs section
 - **2026-09-22 follow-up sync (3 commits)**: **Backchannel logout support** — admin user signout and account deletion now attempt to end client user sessions via backchannel logout. CodeQL action pins aligned (init + analyze at 4.37.9, fixing the version-mismatch workflow failure)
 - **2026-09-22 follow-up sync (31 commits)**: **MFA model rework** — user `mfaRequired` is now authoritative: OIDC App and ProxyAuth MFA enforcement require the user's MFA to be enabled; completing the MFA page permanently enables MFA on the account; admins disabling MFA clears existing TOTP codes; new **MFA CLI commands** (`voidauth users mfa enable|disable`, password-reset moved under `users` with the old command kept); passkeys record user-verification usage (new migration); Sign-Up button moved to the login header; pending OIDC interactions preserved during signup; test-email dialog submit fix; pt-BR translation. Verified coexistence with the fork's TOTP replay protection, lockout, and all hardening seams
@@ -32,7 +35,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 - **Fork logic extracted into fork-owned modules** — `server/cli/index-html.ts` (escaping, CSP mirror, asset-404 guard), `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `server/ldap/hardening.ts` (bind backoff, connection cap, idle timeout) — so upstream-hot files (`server.ts`, `provider.ts`, `interaction.ts`, `email.ts`, `api.ts`, `ldap/server.ts`) carry only single-line seams
 - `scripts/fork-seams.mjs` + `npm run seams:apply` — after a merge, shared-file conflicts resolve with `git checkout --theirs` + one command that re-inserts all fork seams (idempotent; stale anchors fail loudly)
-- `FORK.md` — authoritative fork-divergence manifest (H1-H16 hardening fixes, F1-F3 fork features) and upstream merge playbook
+- `FORK.md` — authoritative fork-divergence manifest (H1-H16 hardening fixes, H10 retired, F1-F3 fork features) and upstream merge playbook
 - `npm run fork:check` — post-merge semantic sweep asserting all divergences are still present (also catches `Dockerfile.fork` drift from upstream `Dockerfile` changes); now also guards the fork-owned modules (H9/H10/H11/H12/H13/F2), the fork-only i18n keys, and cp1252 mojibake in docs/i18n
 - `npm run lockfiles:regen` — regenerates both lockfiles from the unioned `package.json` after a merge
 - `npm run test:integration` — boots a throwaway Postgres, runs `test:ldap-guard` + `test:totp` + `test:ldap-sync`, tears it down

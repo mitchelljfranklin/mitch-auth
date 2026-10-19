@@ -44,7 +44,7 @@ jobs:
       - name: Lint
         run: npx eslint ./
 
-      - name: Build server bundle (madge circular check + esbuild)
+      - name: Build server bundle (dpdm circular check + esbuild)
         run: npm run server:build
 
       - name: Fork divergence check

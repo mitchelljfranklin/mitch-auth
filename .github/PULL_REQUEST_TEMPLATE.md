@@ -5,7 +5,7 @@
 ## Checklist
 
 - [ ] `npm run lint` passes
-- [ ] `npm run server:build` passes (includes tsc + madge circular check)
+- [ ] `npm run server:build` passes (dpdm circular check + esbuild)
 - [ ] `cd frontend && npm run build` passes
 - [ ] No circular import dependencies introduced
 - [ ] Types are explicit — no `any` at exported boundaries

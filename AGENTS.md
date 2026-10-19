@@ -54,7 +54,7 @@ Migrations run automatically at startup (`db.migrate.latest()` in `server/db/con
 ```bash
 npm run lint          # eslint (root tsconfig covers server/, shared/, migrations/, test/; frontend linted separately)
 npx tsc               # typecheck
-npm run server:build  # madge circular check (any cycle aborts), then esbuild → dist/index.mjs
+npm run server:build  # dpdm circular check (any cycle aborts), then esbuild → dist/index.mjs
 npm run prettier      # prettier --write "**/*" (matches pre-commit lint-staged formatting)
 cd frontend && npm run build   # Angular production build
 ```
@@ -74,7 +74,7 @@ Fork tooling:
 
 ## Upstream merges
 
-Follow the playbook in `FORK.md`: it lists every intentional fork divergence (hardening fixes H1-H16, fork features F1-F3), the known re-apply hotspots, and the post-merge verification steps. Required per clone: `git config merge.ours.driver true`.
+Follow the playbook in `FORK.md`: it lists every intentional fork divergence (hardening fixes H1-H16, H10 retired, fork features F1-F3), the known re-apply hotspots, and the post-merge verification steps. Required per clone: `git config merge.ours.driver true`.
 
 The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstream/main` moves ahead of `origin/main`; the merge's final step is `npm run base:set`. `SECURITY.md` (fork-owned, `merge=ours`-protected) is the authoritative record of the MFA/threat model — keep it in sync with behavior changes.
 
@@ -83,7 +83,7 @@ The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstrea
 - There are **no unit tests** anywhere (zero spec files; `ng test` has nothing to run). The frontend *is* wired for vitest via `@angular/build:unit-test` in `frontend/angular.json`, so new `frontend/src/**/*.spec.ts` files run with `cd frontend && npm test` — but nothing exists yet. The CI "Test" workflow is just a multi-arch Docker build whose Dockerfile runs `npx tsc`, `npx eslint ./`, and both production builds.
 - Local equivalent: `npx tsc && npx eslint ./` plus `npm run server:build`; add `cd frontend && npm run build` for frontend changes.
 - **Run `npx tsc` before pushing server changes.** `server:build` bundles via esbuild and skips strict type checks — type errors only surface later in Dockerfile CI.
-- Circular imports under `server/` abort the build (madge step in `esbuild.config.ts`).
+- Circular imports under `server/` abort the build (dpdm step in `esbuild.config.ts`).
 
 ## Quality gates
 
