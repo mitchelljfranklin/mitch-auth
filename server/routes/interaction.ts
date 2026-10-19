@@ -61,6 +61,7 @@ import { checkCanLogin,
   checkPrivilegedForTotpValidate } from '../util/authMiddleware'
 import { TABLES } from '@shared/db'
 import type { InvitationCustomClaim, UserCustomClaim } from '@shared/db/CustomClaim'
+import { updatePasskeyPromptValidator } from '@shared/api-request/UpdatePasskeyPrompt'
 
 // Hash of an unusable password, verified against when the submitted username
 // does not exist so that response timing does not reveal valid usernames
@@ -216,12 +217,27 @@ router.get('/exists', async (req, res) => {
           canLogin: req.user.canLogin,
           expiresAt: req.user.expiresAt,
           approved: req.user.approved,
+          skipPasskeyPrompt: !!req.user.skipPasskeyPrompt,
         }
       : undefined,
   }
 
   res.send(info)
 })
+
+router.patch('/passkey-prompt',
+  checkCanLogin,
+  zodValidate({ body: updatePasskeyPromptValidator }), async (req, res) => {
+    const user = req.user
+    if (!user) {
+      res.sendStatus(401)
+      return
+    }
+
+    await db().table<User>(TABLES.USER).update({ skipPasskeyPrompt: req.body.skipPasskeyPrompt }).where({ id: user.id })
+
+    res.send()
+  })
 
 router.post('/try-again', async (req, res) => {
   const interaction = await getInteractionDetails(req, res)
@@ -379,6 +395,7 @@ router.post('/register',
       expiresAt: invitation?.userExpiresAt ? new Date(invitation.userExpiresAt) : null,
       emailVerified: !!invitation?.email && invitation.emailVerified,
       mfaRequired: !!invitation?.mfaRequired,
+      skipPasskeyPrompt: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -546,6 +563,7 @@ router.post('/register/passkey/end',
       expiresAt: invitation?.userExpiresAt ? new Date(invitation.userExpiresAt) : null,
       emailVerified: !!invitation?.email && invitation.emailVerified,
       mfaRequired: !!invitation?.mfaRequired,
+      skipPasskeyPrompt: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }

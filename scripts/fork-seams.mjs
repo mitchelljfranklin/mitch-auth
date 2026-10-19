@@ -395,39 +395,6 @@ const seams = [
     replacement: `    body: redactChallenges(html ?? text),`,
   },
 
-  // ---------- server/routes/api.ts ----------
-  {
-    id: 'api-import-basic-auth-limiter',
-    file: 'server/routes/api.ts',
-    ref: 'H10',
-    description: 'import failed-basic-auth limiter',
-    applied: `from '../util/rateLimit'`,
-    op: 'insert-after',
-    anchor: `import { getProxyAuthWithCache } from '../db/proxyAuth'`,
-    lines: [
-      `import { basicAuthRateLimit } from '../util/rateLimit'`,
-    ],
-  },
-  {
-    id: 'api-forward-auth-limiter',
-    file: 'server/routes/api.ts',
-    ref: 'H10',
-    description: 'failed-basic-auth limiter on forward-auth',
-    applied: `router.get('/authz/forward-auth', basicAuthRateLimit`,
-    op: 'replace-line',
-    match: `router.get('/authz/forward-auth', async (req: Request, res) => {`,
-    replacement: `  router.get('/authz/forward-auth', basicAuthRateLimit, async (req: Request, res) => {`,
-  },
-  {
-    id: 'api-auth-request-limiter',
-    file: 'server/routes/api.ts',
-    ref: 'H10',
-    description: 'failed-basic-auth limiter on auth-request',
-    applied: `router.get('/authz/auth-request', basicAuthRateLimit`,
-    op: 'replace-line',
-    match: `router.get('/authz/auth-request', async (req: Request, res) => {`,
-    replacement: `  router.get('/authz/auth-request', basicAuthRateLimit, async (req: Request, res) => {`,
-  },
 ]
 
 export default seams

@@ -33,6 +33,7 @@ async function createUser(username: string, dn: string): Promise<string> {
     approved: true,
     emailVerified: true,
     mfaRequired: false,
+    skipPasskeyPrompt: false,
     ldapSource: 'ldap',
     ldapExternalId: dn,
     createdAt: new Date(),
@@ -66,6 +67,7 @@ await db().table('user').insert({
   approved: true,
   emailVerified: true,
   mfaRequired: false,
+  skipPasskeyPrompt: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 })

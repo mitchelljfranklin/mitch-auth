@@ -5,7 +5,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { isProviderClaimsDesynced, provider, resetProvider } from '../oidc/provider'
 import { generateTheme } from '../util/theme'
-import { getUserSessionInteraction, router } from '../routes/api'
+import { router } from '../routes/api'
 import helmet from 'helmet'
 import { keysNeedUpdate, makeKeysValid } from '../db/key'
 import { randomInt } from 'node:crypto'
@@ -20,6 +20,7 @@ import { FORBIDDEN_PATHS, NOT_FOUND_PATHS } from '@shared/constants'
 import { startLDAPServer } from '../ldap/server'
 import { syncLDAP } from '../ldap/sync'
 import * as proxyAddr from 'proxy-addr'
+import { getUserSessionInteraction } from '../util/userMiddleware'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

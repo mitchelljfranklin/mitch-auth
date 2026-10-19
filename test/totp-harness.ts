@@ -29,6 +29,7 @@ async function createUser(): Promise<string> {
     approved: true,
     emailVerified: true,
     mfaRequired: false,
+    skipPasskeyPrompt: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   })

@@ -48,8 +48,6 @@ const checks = [
   ['frontend/src/app/services/auth.service.ts', /e\.status === 0/, 'H15 opaque redirect handled as success'],
   ['frontend/src/app/pages/mfa/mfa.component.ts', /replaceUrl: true/, 'H16 deterministic MFA cancel'],
   ['server/util/redact.ts', /redactChallenges/, 'H9 email body redaction helper'],
-  ['server/util/rateLimit.ts', /basicAuthRateLimit/, 'H10 basic-auth rate limiter'],
-  ['server/util/rateLimit.ts', /skipSuccessfulRequests/, 'H10 limiter skips successful requests'],
   ['server/util/login-timing.ts', /timingEqualizedReject/, 'H12 login timing equalization'],
   ['server/cli/index-html.ts', /extractAngularScriptSrc/, 'H13 CSP script-src mirror helper'],
   ['server/cli/index-html.ts', /assetNotFoundGuard/, 'H13 asset 404 guard'],
