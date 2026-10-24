@@ -179,6 +179,22 @@ if (codeqlInit && codeqlAnalyze && codeqlInit !== codeqlAnalyze) {
   failures.push(`FAIL: CodeQL init (${codeqlInit.slice(0, 7)}) and analyze (${codeqlAnalyze.slice(0, 7)}) pins differ — align to the same action version`)
 }
 
+// The admin background upload/detection mirrors upstream's branding filenames.
+// If upstream renames or reorders them, update server/util/branding.ts (and the
+// upload route's extension mapping); this check makes that review explicit.
+function backgroundNames(source, marker) {
+  const match = source.match(new RegExp(`${marker}\\s*=\\s*\\[([^\\]]*)\\]`))
+  if (!match) return null
+  return [...match[1].matchAll(/'([^']+)'/g)].map(m => m[1])
+}
+const upstreamBackgrounds = backgroundNames(read('server/cli/server.ts'), 'const backgroundPreferenceOrder')
+const forkBackgrounds = backgroundNames(read('server/util/branding.ts'), 'export const BACKGROUND_FILENAMES')
+if (!upstreamBackgrounds || !forkBackgrounds) {
+  failures.push('FAIL: could not locate the branding background filename list — review the Admin background feature (server/cli/server.ts + server/util/branding.ts)')
+} else if (upstreamBackgrounds.join(',') !== forkBackgrounds.join(',')) {
+  failures.push(`FAIL: branding background filenames differ — upstream [${upstreamBackgrounds.join(', ')}] vs fork [${forkBackgrounds.join(', ')}]`)
+}
+
 if (failures.length) {
   failures.forEach(f => console.error(f))
   console.error(`fork-check: ${failures.length} FAILURE(S)`)
