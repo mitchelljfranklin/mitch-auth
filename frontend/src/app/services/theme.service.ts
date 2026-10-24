@@ -19,7 +19,8 @@ export class ThemeService {
   set themeMode(mode: ThemeMode) {
     this._themeMode = mode
     localStorage.setItem('theme_mode', mode)
-    document.body.classList.toggle('dark', mode === 'dark')
-    document.body.classList.toggle('light', mode === 'light')
+    const root = document.documentElement
+    root.classList.toggle('dark', mode === 'dark')
+    root.classList.toggle('light', mode === 'light')
   }
 }
