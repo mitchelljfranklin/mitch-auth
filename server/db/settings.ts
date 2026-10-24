@@ -5,6 +5,7 @@ import { logger } from '../util/logger'
 import zod from 'zod'
 import type { SettingsResponse } from '@shared/api-response/admin/SettingsResponse'
 import appConfig from '../util/config'
+import { findBrandingBackground } from '../util/branding'
 
 const SETTING_PREFIX = 'SETTING_'
 
@@ -24,6 +25,7 @@ type SettingKey
     | 'DEFAULT_USER_EXPIRES_IN'
     | 'SMTP_FROM'
     | 'APP_LOGO'
+    | 'APP_BACKGROUND'
 
 function flagName(key: SettingKey): string {
   return `${SETTING_PREFIX}${key}`
@@ -97,6 +99,7 @@ export async function getAllSettings(): Promise<SettingsResponse> {
     DEFAULT_USER_EXPIRES_IN: getValue('DEFAULT_USER_EXPIRES_IN', null),
     SMTP_FROM: getValue('SMTP_FROM', appConfig.SMTP_FROM ?? null),
     APP_LOGO: getValue('APP_LOGO', null),
+    APP_BACKGROUND: getValue('APP_BACKGROUND', findBrandingBackground()),
   }
 
   return result

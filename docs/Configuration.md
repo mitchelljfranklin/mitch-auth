@@ -4,6 +4,8 @@
 
 Some settings can be managed from the **Admin → Settings** page in the web interface. Settings configured there override environment variable values where both exist. Changes take effect immediately after saving.
 
+The **Appearance** section also manages the app logo and a page background image. Backgrounds (PNG, JPEG or WebP) are resized in the browser and stored as `background.*` in the **/app/config/branding** directory; a background uploaded here takes precedence over a manually placed file, and removing it deletes that file.
+
 ## Users and Apps
 
 User, OIDC App, and ProxyAuth Domain management is performed in the web interface. You can view the documentation on user management on the [User Management](User-Management.md) page.

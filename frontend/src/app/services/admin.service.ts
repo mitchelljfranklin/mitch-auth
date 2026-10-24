@@ -253,4 +253,46 @@ export class AdminService {
       mimeType: file.type,
     }))
   }
+
+  async uploadBackground(file: File) {
+    const dataUrl = await toBackgroundDataUrl(file)
+    return firstValueFrom(this.http.post<{ background: string }>('/api/admin/settings/background', {
+      dataUrl,
+      mimeType: 'image/jpeg',
+    }))
+  }
+
+  async removeBackground() {
+    return firstValueFrom(this.http.delete<null>('/api/admin/settings/background'))
+  }
+}
+
+const BACKGROUND_MAX_DIMENSION = 1920
+const BACKGROUND_MAX_DATA_URL_LENGTH = 800 * 1024
+const BACKGROUND_QUALITY_STEPS = [0.82, 0.72, 0.62, 0.5]
+
+async function toBackgroundDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file)
+  try {
+    const scale = Math.min(1, BACKGROUND_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale))
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('Canvas is not available in this browser')
+    }
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    for (const quality of BACKGROUND_QUALITY_STEPS) {
+      const dataUrl = canvas.toDataURL('image/jpeg', quality)
+      if (dataUrl.length <= BACKGROUND_MAX_DATA_URL_LENGTH) {
+        return dataUrl
+      }
+    }
+    throw new Error('Background image is too large; choose a smaller image.')
+  } finally {
+    bitmap.close()
+  }
 }

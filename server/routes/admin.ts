@@ -5,7 +5,9 @@ import {
 } from '../oidc/provider'
 import { clientUpsertValidator, type ClientUpsert } from '@shared/api-request/admin/ClientUpsert'
 import type { User } from '@shared/db/User'
-import { randomBytes, randomUUID } from 'crypto'
+import { createHash, randomBytes, randomUUID } from 'crypto'
+import fs from 'node:fs'
+import path from 'node:path'
 import { removeClient, upsertClient } from '../db/client'
 import type { UserGroup, Group, InvitationGroup, ProxyAuthGroup } from '@shared/db/Group'
 import { groupUpsertValidator } from '@shared/api-request/admin/GroupUpsert'
@@ -31,6 +33,7 @@ import type { PasswordReset } from '@shared/db/PasswordReset'
 import { passwordResetCreateValidator } from '@shared/api-request/admin/PasswordResetCreate'
 import type { EmailLog } from '@shared/db/EmailLog'
 import appConfig from '../util/config'
+import { BACKGROUND_FILENAMES, BRANDING_DIR } from '../util/branding'
 import type { EmailsResponse } from '@shared/api-response/admin/EmailsResponse'
 import type { OIDCPayload } from '@shared/db/OIDCPayload'
 import type { ClientResponse, ClientLogoResponse } from '@shared/api-response/ClientResponse'
@@ -1381,5 +1384,66 @@ adminRouter.post('/settings/logo',
     }
 
     await setSetting('APP_LOGO', dataUrl)
+    applySettingsFromDB(await getAllSettings())
     res.send({ logo: dataUrl })
   })
+
+const MAX_BACKGROUND_SIZE_BYTES = 800 * 1024
+
+const backgroundUploadValidator = {
+  dataUrl: zod.string().regex(/^data:image\/(png|jpeg);base64,/, 'Must be a base64 PNG or JPEG data URL'),
+  mimeType: zod.enum(['image/png', 'image/jpeg']),
+}
+
+const BACKGROUND_EXTENSIONS: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+}
+
+function imageBytesMatchMimeType(data: Buffer, mimeType: string): boolean {
+  if (mimeType === 'image/png') {
+    return data.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  }
+  return data.length > 2 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff
+}
+
+adminRouter.post('/settings/background',
+  zodValidate({
+    body: backgroundUploadValidator,
+  }), async (req, res) => {
+    const { dataUrl, mimeType } = req.body
+
+    if (Buffer.byteLength(dataUrl, 'utf8') > MAX_BACKGROUND_SIZE_BYTES) {
+      res.status(413).send({ message: 'Background exceeds maximum size of 800 KB.' })
+      return
+    }
+
+    const extension = BACKGROUND_EXTENSIONS[mimeType]
+    const data = Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64')
+    if (!extension || !imageBytesMatchMimeType(data, mimeType)) {
+      res.status(422).send({ message: 'Background must be a PNG or JPEG image.' })
+      return
+    }
+
+    const filename = `background.${extension}`
+    fs.mkdirSync(BRANDING_DIR, { recursive: true })
+    for (const existing of BACKGROUND_FILENAMES) {
+      if (existing !== filename) {
+        fs.rmSync(path.join(BRANDING_DIR, existing), { force: true })
+      }
+    }
+    fs.writeFileSync(path.join(BRANDING_DIR, filename), data)
+
+    const version = createHash('sha256').update(data).digest('hex').slice(0, 12)
+    const background = `${filename}?v=${version}`
+    await setSetting('APP_BACKGROUND', background)
+    res.send({ background })
+  })
+
+adminRouter.delete('/settings/background', async (_req, res) => {
+  for (const existing of BACKGROUND_FILENAMES) {
+    fs.rmSync(path.join(BRANDING_DIR, existing), { force: true })
+  }
+  await setSetting('APP_BACKGROUND', null)
+  res.send()
+})

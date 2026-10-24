@@ -120,6 +120,7 @@ The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstrea
 - Booleans stored as `'true'`/`'false'` strings, parsed with `zod.stringbool()`. Upserts use `.onConflict(['name']).merge(['value', 'updatedAt'])`.
 - Settings load during the first maintenance run inside `doMaintenance()` (`server/cli/server.ts`), after `createInitialAdmin()`; updates go through settings routes in `admin.ts` calling `applySettingsFromDB()`.
 - After changing appearance settings (`APP_COLOR`, `APP_FONT`, `APP_LOGO`) call `generateTheme()` (`server/util/theme.ts`). Theme CSS is rendered server-side at runtime with sass + Angular schematics — this is also why `@angular/material` is an esbuild `external`.
+- Appearance: `APP_LOGO` is a DB data URL; `APP_BACKGROUND` mirrors the uploaded `config/branding/background.*` filename (the file is what the index injection serves, and Remove deletes it).
 
 ## Config class quirks (`server/util/config.ts`)
 
@@ -128,9 +129,9 @@ The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstrea
 - `ADMIN_EMAILS` and `DEFAULT_USER_EXPIRES_IN` have custom parsing — pass raw strings through `assignConfigValue()`, never assign directly.
 - `config.ts` cannot import from `server/db/` (circular dependency). Use the injected-function pattern: config exports functions taking data, callers read the DB and pass values in.
 
-## Logo uploads
+## Logo & background uploads
 
-Express body parsers drain the request stream before handlers run — never read raw bodies on routes behind `express.json()`. Logos arrive as JSON `{ dataUrl, mimeType }`, built client-side via `FileReader.readAsDataURL()` (see logo route in `admin.ts`).
+Express body parsers drain the request stream before handlers run — never read raw bodies on routes behind `express.json()`. Logos arrive as JSON `{ dataUrl, mimeType }`, built client-side via `FileReader.readAsDataURL()` (see logo route in `admin.ts`). Backgrounds also arrive as `{ dataUrl, mimeType }` but are downscaled client-side (`canvas` → JPEG) and written to `config/branding/background.*` (served by upstream's branding injection), not stored in the DB.
 
 ## DB backend portability (PostgreSQL + SQLite)
 

@@ -14,4 +14,5 @@ export type SettingsResponse = {
   DEFAULT_USER_EXPIRES_IN: string | null
   SMTP_FROM: string | null
   APP_LOGO: string | null
+  APP_BACKGROUND: string | null
 }

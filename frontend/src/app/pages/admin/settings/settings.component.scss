@@ -35,6 +35,26 @@ mat-card {
   padding: 4px;
 }
 
+.background-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.background-preview {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 4px;
+}
+
+.background-hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.875rem;
+}
+
 button[type="submit"] {
   margin-top: 16px;
   float: right;

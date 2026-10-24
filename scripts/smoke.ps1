@@ -76,6 +76,20 @@ try {
   Assert 'CSP worker-src pinned to self' ($csp -match "worker-src 'self'")
   Assert 'index served with no-store' ($index.Headers['Cache-Control'] -match 'no-store|no-cache')
 
+  # branding background: served from config/branding and injected into the index
+  $bgSource = Join-Path ([System.IO.Path]::GetTempPath()) 'smoke-background.jpg'
+  [System.IO.File]::WriteAllBytes($bgSource, [byte[]](0xFF, 0xD8, 0xFF, 0xD9))
+  try {
+    docker cp $bgSource "${app}:/app/config/branding/background.jpg" | Out-Null
+    $bg = Invoke-WebRequest -Uri "http://localhost:${Port}/background.jpg" -UseBasicParsing
+    Assert 'branding background served' ($bg.StatusCode -eq 200)
+    $indexBg = Invoke-WebRequest -Uri "http://localhost:${Port}/" -UseBasicParsing
+    Assert 'branding background injected into index' ($indexBg.Content -match '--page-background-image: url\("background\.jpg"\)')
+  } finally {
+    Remove-Item $bgSource -Force -ErrorAction SilentlyContinue
+    docker exec $app rm -f /app/config/branding/background.jpg | Out-Null
+  }
+
   # gated admin routes exist (401 = auth-gated, route present)
   foreach ($route in @('/api/admin/settings', '/api/admin/claims', '/api/user/me')) {
     try {
