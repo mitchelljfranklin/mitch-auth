@@ -19,6 +19,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ## Fork changes
 
+### [Unreleased]
+
+#### Developer tooling
+
+- `fork:check` now asserts the fork's branding background filename list (`server/util/branding.ts`) matches upstream's `backgroundPreferenceOrder` in `server.ts` — the Admin background upload/detection depends on it, and upstream can change it on a merge.
+
 ### [1.19.0] - 2026-10-24
 
 #### Fork features
