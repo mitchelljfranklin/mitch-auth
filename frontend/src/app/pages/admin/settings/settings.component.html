@@ -102,6 +102,21 @@
             <mat-progress-bar mode="indeterminate"></mat-progress-bar>
           }
         </div>
+
+        <div class="background-section">
+          <label>{{ "admin.settings.labels.background" | translate }}</label>
+          @if (backgroundPreviewUrl) {
+            <img [src]="backgroundPreviewUrl" class="background-preview" alt="Background preview" />
+            <button mat-stroked-button type="button" (click)="removeBackground()" [disabled]="backgroundSaving">
+              {{ "admin.common.actions.remove" | translate }}
+            </button>
+          }
+          <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onBackgroundSelected($event)" />
+          <p class="background-hint">{{ "admin.settings.labels.background-hint" | translate }}</p>
+          @if (backgroundSaving) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          }
+        </div>
       </mat-card-content>
     </mat-card>
 

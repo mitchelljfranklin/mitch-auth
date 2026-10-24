@@ -24,6 +24,8 @@ export class SettingsComponent implements OnInit {
 
   logoUrl: string | null = null
   logoSaving = false
+  backgroundUrl: string | null = null
+  backgroundSaving = false
 
   settingsForm = this.fb.nonNullable.group({
     APP_TITLE: [''],
@@ -67,6 +69,7 @@ export class SettingsComponent implements OnInit {
         SMTP_FROM: settings.SMTP_FROM ?? '',
       })
       this.logoUrl = settings.APP_LOGO
+      this.backgroundUrl = settings.APP_BACKGROUND
     } catch (_error) {
       this.snackbarService.error('Failed to load settings')
     } finally {
@@ -128,6 +131,49 @@ export class SettingsComponent implements OnInit {
       this.snackbarService.error('Failed to upload logo')
     } finally {
       this.logoSaving = false
+    }
+  }
+
+  get backgroundPreviewUrl(): string | null {
+    return this.backgroundUrl ? new URL(this.backgroundUrl, document.baseURI).href : null
+  }
+
+  async onBackgroundSelected(event: Event) {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    if (!file) {
+      return
+    }
+
+    if (!file.type.match(/image\/(png|jpeg|webp)/)) {
+      this.snackbarService.error('Only PNG, JPEG and WebP images are supported')
+      input.value = ''
+      return
+    }
+
+    this.backgroundSaving = true
+    try {
+      const result = await this.adminService.uploadBackground(file)
+      this.backgroundUrl = result.background
+      this.snackbarService.message('Background updated')
+    } catch (error) {
+      this.snackbarService.error(error instanceof Error ? error.message : 'Failed to upload background')
+    } finally {
+      this.backgroundSaving = false
+      input.value = ''
+    }
+  }
+
+  async removeBackground() {
+    this.backgroundSaving = true
+    try {
+      await this.adminService.removeBackground()
+      this.backgroundUrl = null
+      this.snackbarService.message('Background removed')
+    } catch (_error) {
+      this.snackbarService.error('Failed to remove background')
+    } finally {
+      this.backgroundSaving = false
     }
   }
 }

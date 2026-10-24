@@ -861,7 +861,9 @@
         "admin-emails": "Admin Notification Emails",
         "signup-requires-approval": "Require Admin Approval",
         "password-strength": "Password Strength (0-4)",
-        "logo": "Logo"
+        "logo": "Logo",
+        "background": "Background Image",
+        "background-hint": "PNG, JPEG or WebP. Large images are resized automatically and stored in the branding folder."
       },
       "sections": {
         "email": "Email",

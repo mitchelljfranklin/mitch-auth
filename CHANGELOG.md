@@ -21,7 +21,9 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ### [Unreleased]
 
-_No unreleased changes._
+#### Fork features
+
+- **Background image in Admin Settings** — the Appearance section can now upload a page background (PNG/JPEG/WebP). The browser downscales it (max 1920 px, JPEG) and the server writes it to `config/branding/background.*`, which the existing page-background injection serves; it takes precedence over a manually placed branding file, and **Remove** deletes it. Uploading a logo now also applies immediately instead of waiting for a restart or the next settings save.
 
 ### [1.18.0] - 2026-10-24
 
