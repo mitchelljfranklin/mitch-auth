@@ -167,6 +167,18 @@ for (const from of upstreamFroms) {
   }
 }
 
+// CodeQL init/analyze must be pinned to the same action version, or the run
+// fails with "Loaded a configuration file for version X, but running version Y".
+const codeqlWorkflow = read('.github/workflows/codeql.yml')
+function codeqlActionSha(action) {
+  return codeqlWorkflow.match(new RegExp(`codeql-action/${action}@([0-9a-f]{40})`))?.[1]
+}
+const codeqlInit = codeqlActionSha('init')
+const codeqlAnalyze = codeqlActionSha('analyze')
+if (codeqlInit && codeqlAnalyze && codeqlInit !== codeqlAnalyze) {
+  failures.push(`FAIL: CodeQL init (${codeqlInit.slice(0, 7)}) and analyze (${codeqlAnalyze.slice(0, 7)}) pins differ — align to the same action version`)
+}
+
 if (failures.length) {
   failures.forEach(f => console.error(f))
   console.error(`fork-check: ${failures.length} FAILURE(S)`)
