@@ -1,6 +1,6 @@
-# 🚀 Mitch-Auth v1.17.0 — Rebrand & MFA Model Rework
+# 🚀 Mitch-Auth v1.18.0 — Custom Branding, Passkey Control & Hardening
 
-> **TL;DR** — The project is now **Mitch-Auth** (new name, new Docker image — migration required, see below). Upstream's **MFA model rework** makes per-account MFA authoritative with new CLI commands, **backchannel logout** now ends client sessions on signout and account deletion, admin tables are **paginated**, and a handful of upstream fixes land (password-strength enforcement, paginator, test-email dialog).
+> **TL;DR** — Three upstream syncs (**63 commits**) bring per-application OIDC logos, custom page **background images**, a per-user **skip passkey prompt** preference, and upstream's own proxy-auth **basic-auth failure rate limiting**. The build moves to **dpdm + TypeScript 6**, fork CI gates every push, and a CodeQL pin regression is fixed.
 
 ---
 
@@ -8,102 +8,69 @@
 
 | Area | Summary |
 |---|---|
-| 🏷️ Rebranding | Project, Docker image, docs and repository are now **Mitch-Auth / mitch-auth** — migration required for existing deployments |
-| 🔁 MFA model rework | Per-account MFA is now **authoritative**; app-level enforcement requires user MFA; new MFA CLI commands; TOTP codes cleared when admins disable MFA |
-| 🚪 Backchannel logout | Admin signout and account deletion now end client sessions via backchannel logout |
-| 📄 Admin tables | Paginated users/password-resets APIs; page size remembered across admin pages |
-| 🐛 Fixes | Password-strength enforcement now always applies; paginator page size; pending OIDC interactions preserved during signup; test-email dialog |
-| 🌍 Locales | pt-BR added; Estonian, Chinese, Russian, Dutch, German, French refreshed |
+| 🎨 Branding | Per-app OIDC logos and **uploaded asset** storage; `background.png` / `background.jpg` page backgrounds; `DISABLE_FILE_UPLOADS` kill switch |
+| 🔐 Authentication | Per-user **skip passkey prompt**; upstream's `getUserByBasicAuth` failure limiter replaces fork hardening H10 |
+| 🌍 Localization | Table headers, paginator and admin page titles translated; ru-RU completed (en-US now 550 keys) |
+| 🛠️ Build & CI | Madge → **dpdm**, **TypeScript 6**, a fork verification workflow, CodeQL pin fix, and a Node 24.18 pin |
 
 ---
 
-## 🏷️ Rebranding & Migration — **read this first**
+## ✨ Highlights
 
-This release renames the project from **Mitch-VoidAuth** to **Mitch-Auth**.
+### 🎨 Branding, now with backgrounds
 
-1. **Update your compose file's image line**:
-   ```yaml
-   image: ghcr.io/mitchelljfranklin/mitch-auth:latest   # was .../mitch-voidauth:latest
-   ```
-2. Your existing **config volume and database carry over unchanged** — no data migration beyond the automatic schema updates on first start (passkey verification tracking)
-3. The GitHub repository is now `mitchelljfranklin/mitch-auth` (old URLs redirect automatically)
-4. The old `mitch-voidauth` GHCR image is frozen (no further updates); all future releases publish under `mitch-auth`
+Drop a `background.png` or `background.jpg` into the mounted **`/app/config/branding`** directory and it becomes a page background on the user-facing screens that are not expected to scroll much — login, MFA, password reset, verification, consent and not-found pages. The fork's DB-backed `APP_LOGO` setting now composes with it instead of hiding it.
 
----
+### 🖼️ Per-application OIDC logos
 
-## 🔁 MFA Model Rework
+Each OIDC application can now carry its own logo. Uploads are content-hashed and de-duplicated under **`/app/config/uploads`**, with randomized filenames. If you would rather not accept any uploads, set **`DISABLE_FILE_UPLOADS=true`**.
 
-Upstream reworked how MFA enforcement works. The behavioral changes:
+### 🔑 Skip the passkey prompt
 
-- **Per-account MFA is now authoritative** — completing the MFA page permanently enables MFA on that account, so users can never believe they have MFA when they don't
-- **App-level enforcement is stricter** — OIDC client and ProxyAuth MFA requirements now *also* require the user's own MFA to be enabled
-- **Admins disabling MFA clears stored TOTP codes** — no stale codes hanging around on accounts where MFA was turned off
-- **Pre-login MFA setup restrictions** — users who already have a way to complete MFA are no longer offered pre-login passkey/TOTP registration
-- **New MFA CLI commands**:
-  ```bash
-  voidauth user mfa enable <username>
-  voidauth user mfa disable <username>
-  ```
-- **Passkeys record user-verification usage** (automatic schema migration on first start)
-- MFA Required can now be set on the **Invitations page**
+Users who prefer not to be asked about passkeys on every sign-in can opt out. The preference is stored per account (`skipPasskeyPrompt`, backfilled to `false` for existing users) and can be set from the passkey prompt itself.
+
+### 🛡️ Proxy-auth hardening
+
+Upstream moved proxy-auth basic-auth resolution into `server/util/userMiddleware.ts` and rate-limits **failed** basic-auth attempts there (2 failures / 10 s, successful requests are not counted). This supersedes the fork's own limiter, so hardening **H10 is retired** — one less divergence to carry across merges.
 
 ---
 
-## 🚪 Backchannel Logout
+## 🔧 Fixes & reliability
 
-- OIDC clients can now configure a **Backchannel Logout URL**
-- **Admin user signout** and **account deletion** now attempt to end that user's sessions in connected client applications via backchannel logout
-- See the updated [OIDC App Guides](docs/OIDC-Guides.md) (e.g. Immich) for client configuration
-
-## 📄 Admin Table Pagination
-
-- Users and password-resets APIs are now paginated
-- Your chosen **page size is remembered** across admin pages and sessions
-- Debounced dropdown searches in admin dialogs
-
-## 🖥️ Login Page
-
-- The **Sign-Up button moved to the header** of the login page
-- Pending OIDC interactions are now **preserved during signup**, so starting a signup from a client app no longer loses the original redirect
+- **CodeQL Advanced is green again.** Upstream's dependabot bumped only `codeql-action/init` to v4.38.3, leaving `analyze` on v4.38.2, which failed every push with a config/version mismatch. Both are now pinned to v4.38.3, and `fork:check` fails if they ever diverge.
+- **`APP_LOGO` + background images** now work together (the DB-logo path previously returned before the background injection).
+- **Docs encoding repaired** — `docs/Configuration.md` had been committed as cp1252-mangled UTF-8; emoji and arrows render correctly again.
+- **Smoke-test failure counting** fixed (failures were counted twice).
+- **TOTP harness de-flaked** — window arithmetic is anchored to a TOTP boundary instead of wall-clock time (~1/30 runs could fail at a boundary).
+- `REDIRECT_PATHS.NOT_FOUND` was renamed from `not-found` to `not_found` by upstream.
 
 ---
 
-## 🐛 Fixes
+## 🏗️ Under the hood
 
-| Fix | Detail |
-|---|---|
-| Password-strength enforcement | The strength check now always prevents weak passwords from being applied, and API error responses consistently stop further processing |
-| Paginator page size | Minimum page size corrected to match the UI; the count no longer accumulates in the dropdown |
-| Custom Claims logo | Logo display fix on the Custom Claims admin page |
-| Test-email dialog | Submit no longer reloads the page |
-| Migration rollback | Missing `down()` added to the user-group-client-mfa migration |
-| Search hardening | User search terms are escaped before use in queries |
+- Circular-dependency detection switched from **Madge to dpdm**; **TypeScript 6** is now an explicit dependency; dependency refresh across Angular 22.2, oidc-provider 9.12, express 5.3 and friends.
+- New **`verify-fork.yml`** CI runs typecheck, lint, the dpdm bundle check, `fork:check`, the i18n check, an AOT frontend build and the integration harnesses on every push/PR to `mitch-auth`.
+- Merge tooling: `docs:drift` (surfaces silently dropped `merge=ours` docs), `lockfiles:regen`, `test:integration`, and a `fork:check` that now also guards the fork-owned modules, i18n keys, docs encoding and CodeQL pins.
+- `.nvmrc` / `.node-version` pin Node 24.18.0 (Angular's build floor).
 
 ---
 
-## 🧰 Pipeline & Tooling
+## 📦 Upgrade notes
 
-- **CodeQL**: action pins aligned (`init` + `analyze` at 4.37.9, fixing the version-mismatch failure) and CodeQL now scans this repository's actual deployment branch
-- **Seam engine**: `seams:apply` preserves matched-line indentation — prevents YAML/code de-indentation in future upstream merges
-- **Upstream drift monitor**: drift issues now include the commit count in the title and auto-close when a sync lands
-- **`npm run base:set`** — one command records the upstream base in `FORK.md` and `CHANGELOG.md`, with a guard against recording unmerged bases
-- GitHub Actions bumps: `build-push-action` 7.3.0, `setup-qemu-action` 4.3.0, `codeql-action` 4.37.9, `deploy-pages` 5.0.1
+> [!NOTE]
+> Database migrations run automatically at startup. This release adds `uploaded_assets` (with client-logo assets) and the `skipPasskeyPrompt` user column (existing users are backfilled to `false`).
 
----
-
-## 🌍 Locales
-
-- **pt-BR (Brazilian Portuguese) added**
-- Estonian, Chinese, Russian, Dutch, German and French translations refreshed
+- **Back up the config volume.** Uploaded assets live in `/app/config/uploads`; if you mount `./voidauth/config:/app/config` (as in `compose.fork.yml`), they are already persisted.
+- **Disable uploads** with `DISABLE_FILE_UPLOADS=true` if your deployment should not accept user files.
+- **Deep links:** the internal not-found route changed from `/not-found` to `/not_found`. Normal SPA navigation is unaffected.
+- **Docker:** `ghcr.io/mitchelljfranklin/mitch-auth:1.18.0` — multi-arch `linux/amd64` and `linux/arm64`.
 
 ---
 
-## ✅ Verification Performed
+## ✅ Verification performed
 
-- `fork:check`: 30 seams + 22 owned-file divergences verified intact after the merge
-- Integration harnesses: TOTP replay/lockout (re-verified against the reworked MFA model), LDAP sync provenance, LDAP bind guard — **all pass**
-- Full pipeline: `tsc`, `eslint`, circular-dependency check, Angular AOT production build, multi-arch image, 15-assertion runtime smoke (incl. embedded LDAP listener)
+Typecheck (`tsc`) and lint clean; `dpdm` circular check and esbuild bundle pass; `fork:check` (27 seams + 29 divergences); `test:integration` (`ldap-guard`, `totp`, `ldap-sync`) all pass; production Angular AOT build; runtime smoke test (health, base href, CSP mirror, gated routes, migrations, LDAP listener); fork CI and CodeQL both green.
 
-**Full change details:** [CHANGELOG.md](CHANGELOG.md) · **Fork divergence manifest:** [FORK.md](FORK.md)
+---
 
-<sub>Neither VoidAuth nor this fork has been independently audited. Use at your own risk.</sub>
+**Full changelog:** [CHANGELOG.md](https://github.com/mitchelljfranklin/mitch-auth/blob/mitch-auth/CHANGELOG.md)

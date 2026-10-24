@@ -21,6 +21,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ### [Unreleased]
 
+_No unreleased changes._
+
+### [1.18.0] - 2026-10-24
+
+_Includes all changes shipped since v1.17.0; earlier entries are retained for history._
+
 #### Upstream sync
 
 - **2026-10-24 sync (12 commits)**: **Branding background image** — `background.png`/`background.jpg` in `/app/config/branding` is injected as `--page-background-image` and shown on user-facing pages flagged `data: { pageBackground: true }` (login, MFA, reset/forgot password, verify, consent, not-found, etc.); header/button/text width and style tweaks. Upstream changed the i18n table-column translation method (so i18nAlly recognizes the strings) and completed the ru-RU translation. `REDIRECT_PATHS.NOT_FOUND` renamed `not-found` → `not_found`. Upstream rotated the Docker Hub secret in its own workflows (the fork still uses `release-fork.yml`). Docs: branding background row/prose and a refreshed customization screenshot. No Dockerfile or dependency changes. Fork fix: the DB-backed `APP_LOGO` path returned from `modifyIndex` before upstream's new background injection, so it now injects the branding background too
@@ -39,7 +45,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 - **Fork logic extracted into fork-owned modules** — `server/cli/index-html.ts` (escaping, CSP mirror, asset-404 guard), `server/util/cors.ts`, `server/util/login-timing.ts`, `server/util/redact.ts`, `server/ldap/hardening.ts` (bind backoff, connection cap, idle timeout) — so upstream-hot files (`server.ts`, `provider.ts`, `interaction.ts`, `email.ts`, `api.ts`, `ldap/server.ts`) carry only single-line seams
 - `scripts/fork-seams.mjs` + `npm run seams:apply` — after a merge, shared-file conflicts resolve with `git checkout --theirs` + one command that re-inserts all fork seams (idempotent; stale anchors fail loudly)
 - `FORK.md` — authoritative fork-divergence manifest (H1-H16 hardening fixes, H10 retired, F1-F3 fork features) and upstream merge playbook
-- `npm run fork:check` — post-merge semantic sweep asserting all divergences are still present (also catches `Dockerfile.fork` drift from upstream `Dockerfile` changes); now also guards the fork-owned modules (H9/H10/H11/H12/H13/F2), the fork-only i18n keys, cp1252 mojibake in docs/i18n, and matching CodeQL `init`/`analyze` action pins
+- `npm run fork:check` — post-merge semantic sweep asserting all divergences are still present (also catches `Dockerfile.fork` drift from upstream `Dockerfile` changes); now also guards the fork-owned modules (H9/H11/H12/H13/F2), the fork-only i18n keys, cp1252 mojibake in docs/i18n, and matching CodeQL `init`/`analyze` action pins
 - **CodeQL Advanced fix** — upstream's dependabot bumped only `github/codeql-action/init` (to v4.38.3), leaving `analyze` at v4.38.2; the mismatch failed every push run with `Loaded a configuration file for version '4.38.3', but running version '4.38.2'`. Both steps are now pinned to v4.38.3, and `fork:check` fails if they ever diverge
 - `npm run lockfiles:regen` — regenerates both lockfiles from the unioned `package.json` after a merge
 - `npm run test:integration` — boots a throwaway Postgres, runs `test:ldap-guard` + `test:totp` + `test:ldap-sync`, tears it down
