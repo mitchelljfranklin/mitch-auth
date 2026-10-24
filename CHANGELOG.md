@@ -25,6 +25,10 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 - **Background image in Admin Settings** — the Appearance section can now upload a page background (PNG/JPEG/WebP). The browser downscales it (max 1920 px, JPEG) and the server writes it to `config/branding/background.*`, which the existing page-background injection serves; it takes precedence over a manually placed branding file, and **Remove** deletes it. Uploading a logo now also applies immediately instead of waiting for a restart or the next settings save.
 
+#### Fixes
+
+- **Light-theme canvas** — the theme toggle now applies `light`/`dark` to `<html>` (`documentElement`) instead of only `<body>`, and `styles.scss` targets `html.light` / `html.dark`. The generated theme sets `html { color-scheme: light dark }`, so with a dark OS and an explicit light theme, `<html>` previously resolved its `light-dark()` surface to the dark color and painted a dark canvas below the viewport-height body (visible when scrolling). `System` mode still follows the OS.
+
 ### [1.18.0] - 2026-10-24
 
 _Includes all changes shipped since v1.17.0; earlier entries are retained for history._
