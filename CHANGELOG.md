@@ -19,9 +19,11 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ## Fork changes
 
-### [Unreleased]
+### [1.18.1] - 2026-10-24
 
-_No unreleased changes._
+#### Fixes
+
+- **Light-theme canvas** — the theme toggle now applies `light`/`dark` to `<html>` (`documentElement`) instead of only `<body>`, and `styles.scss` targets `html.light` / `html.dark`. The generated theme sets `html { color-scheme: light dark }`, so with a dark OS and an explicit light theme, `<html>` previously resolved its `light-dark()` surface to the dark color and painted a dark canvas below the viewport-height body (visible when scrolling). `System` mode still follows the OS.
 
 ### [1.18.0] - 2026-10-24
 
