@@ -1,6 +1,6 @@
-# 🚀 Mitch-Auth v1.19.0 — Branding Backgrounds & Theme Fix
+# 🚀 Mitch-Auth v1.20.0 — User Avatars & TOTP Key-Rotation Fix
 
-> **TL;DR** — You can now upload a **page background** from **Admin → Settings → Appearance**, the **light-theme dark canvas** below the fold is fixed, and logo uploads take effect immediately.
+> **TL;DR** — Users and admins can now set **profile avatars** (with an opt-out switch), TOTP secrets are correctly **re-encrypted when `STORAGE_KEY` rotates**, image uploads share one hardened pipeline, and translations were refreshed.
 
 ---
 
@@ -8,47 +8,50 @@
 
 | Area | Summary |
 |---|---|
-| 🎨 Background | Upload / remove a page background from Admin Settings; PNG, JPEG or WebP, resized automatically |
-| 🌗 Theme | Light theme no longer shows a dark canvas when the OS is in dark mode |
-| 🖼️ Logo | Uploads now apply immediately — no restart or extra save |
-| 📦 Upgrade | No database migrations or configuration changes |
+| 👤 Avatars | Self-service on the home page; admins can manage avatars on users and invitations |
+| 🔐 TOTP | Secrets are re-encrypted on `STORAGE_KEY` rotation (fix) |
+| 🖼️ Uploads | Shared `imageUpload` / `normalizeUploadedImage` pipeline (client logos + avatars) |
+| 🌍 i18n | German, French, Dutch, Russian and English updates |
+| 🛠️ CI | CodeQL `init`/`analyze` aligned to v4.39.0; `actions/checkout` v7.0.1 |
 
 ---
 
 ## ✨ Highlights
 
-### 🎨 Background image from Admin Settings
+### 👤 User avatars
 
-**Admin → Settings → Appearance** now has a **Background Image** control next to the logo.
+- Users can upload or remove their avatar from the home page.
+- Admins can set or remove avatars while editing a **user** or an **invitation**.
+- PNG, JPEG or WebP, validated for size and dimensions, stored as content-hashed de-duplicated uploaded assets (orphans are cleaned up during maintenance).
+- Set **`DISABLE_USER_AVATAR_UPLOADS=true`** to stop members from uploading avatars — admins can still manage them.
 
-- Upload **PNG, JPEG or WebP** — the browser downscales it to at most **1920 px** and compresses it to JPEG before upload.
-- The image is stored as **`background.jpg`** in your mounted **`/app/config/branding`** directory, so it persists with the rest of your config volume.
-- **Remove** deletes it again.
-- A manually placed `background.png` / `background.jpg` / `background.jpeg` still works (the upstream mechanism), and the settings page now detects and previews it.
+### 🔐 TOTP storage-key rotation fixed
 
-> No new environment variable: the background stays file-based, matching upstream. Admin uploads simply manage that file.
+When `STORAGE_KEY` was rotated, TOTP secrets could be checked for decryptability but were not actually re-encrypted with the new key. They now are, matching the other encrypted tables — so rotating keys no longer risks stale TOTP secrets.
 
-### 🌗 Light-theme canvas fixed
+### 🖼️ One image pipeline
 
-Choosing **light** on a device whose OS is in dark mode could leave a dark band behind the content once you scrolled past the first screen. The theme toggle now applies the `light` / `dark` class to **`<html>`** instead of only `<body>`, so the page canvas matches the selected theme. **System** mode is unchanged.
+Client logos and avatars now share a single multer + sharp pipeline with consistent size/dimension limits and normalization.
 
-### 🖼️ Logo uploads apply immediately
+### 🌍 Localization & CI
 
-Uploading an app logo from Appearance now takes effect right away, instead of waiting for a restart or another settings save.
+Translation updates across German, French, Dutch, Russian and English. Upstream bumped CodeQL `init` to v4.39.0; the fork aligned `analyze` to the same pin (guarded by `fork:check`), and `actions/checkout` to v7.0.1.
 
 ---
 
 ## 📦 Upgrade
 
-- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.19.0` — multi-arch `linux/amd64` + `linux/arm64`
-- **No** database migrations or configuration changes.
-- Background images live in `/app/config/branding`; keep that volume backed up (as before).
+- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.20.0` — multi-arch `linux/amd64` + `linux/arm64`
+- **Database migration** `user_avatars` adds nullable `avatarHash` columns to `user` and `invitation`; it runs automatically at startup.
+- Avatar files live alongside client logos in **`/app/config/uploads`** — keep that volume persisted/backed up.
+- Optional: **`DISABLE_USER_AVATAR_UPLOADS=true`** prevents member avatar uploads.
+- No other configuration changes.
 
 ---
 
 ## ✅ Verification
 
-`tsc` / `eslint` clean; `dpdm` circular check and esbuild bundle pass; `fork:check` (27 seams + 29 divergences); production Angular AOT build; `test:integration` (`ldap-guard`, `totp`, `ldap-sync`) all pass; runtime smoke test including **background served + injected into the index**; fork CI and CodeQL green.
+`tsc` / `eslint` clean; `dpdm` circular check and esbuild bundle pass; `fork:check` (27 seams + 29 divergences); production Angular AOT build; `test:integration` (`ldap-guard`, `totp`, `ldap-sync`) all pass; runtime smoke test including branding-background serving; fork CI and CodeQL green.
 
 ---
 
