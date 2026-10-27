@@ -131,7 +131,7 @@ The weekly `upstream-drift.yml` job opens an `upstream-sync` issue when `upstrea
 
 ## Logo & background uploads
 
-Express body parsers drain the request stream before handlers run — never read raw bodies on routes behind `express.json()`. Logos arrive as JSON `{ dataUrl, mimeType }`, built client-side via `FileReader.readAsDataURL()` (see logo route in `admin.ts`). Backgrounds also arrive as `{ dataUrl, mimeType }` but are downscaled client-side (`canvas` → JPEG) and written to `config/branding/background.*` (served by upstream's branding injection), not stored in the DB.
+Express body parsers drain the request stream before handlers run — never read raw bodies on routes behind `express.json()`. Logos arrive as JSON `{ dataUrl, mimeType }`, built client-side via `FileReader.readAsDataURL()` (see logo route in `admin.ts`). Backgrounds also arrive as `{ dataUrl, mimeType }` but are downscaled client-side (`canvas` → JPEG) and written to `config/branding/background.*` (served by upstream's branding injection), not stored in the DB. Avatars and client logos use upstream's multipart `imageUpload`/`normalizeUploadedImage` helper (multer + sharp) — see `server/util/uploadedImage.ts`.
 
 ## DB backend portability (PostgreSQL + SQLite)
 

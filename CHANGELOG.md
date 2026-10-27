@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `ca1fd29` | 2026-10-27 |
 | `1e215b7` | 2026-10-24 |
 | `c82c4c2` | 2026-10-19 |
 | `aa260a8` | 2026-10-14 |
@@ -20,6 +21,10 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 ## Fork changes
 
 ### [Unreleased]
+
+#### Upstream sync
+
+- **2026-10-27 sync (14 commits)**: **User avatars** — users can upload/remove an avatar on the home page; admins can manage avatars on the user and invitation pages. PNG/JPEG/WebP within size/dimension limits, stored as de-duplicated uploaded assets (new `user_avatars` migration adds `avatarHash` to `user` and `invitation`; orphaned assets are cleaned up in maintenance). New **`DISABLE_USER_AVATAR_UPLOADS`** environment variable disables member uploads while admins retain control. Image uploads were refactored into a shared `imageUpload`/`normalizeUploadedImage` helper (client logos now use it too). Fix: **TOTP secrets are now re-encrypted on `STORAGE_KEY` rotation** (previously they were only checked for decryptability). i18n updates across de/fr/nl/ru/en-US. Upstream bumped CodeQL `init` to v4.39.0 and `actions/checkout` to v7.0.1; the fork aligned CodeQL `analyze` to v4.39.0. Docs: cherry-picked the `DISABLE_USER_AVATAR_UPLOADS` row
 
 #### Developer tooling
 
