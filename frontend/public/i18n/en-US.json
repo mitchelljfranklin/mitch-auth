@@ -269,7 +269,10 @@
         "actions": {
           "submit": {
             "label": "Update Profile"
-          }
+          },
+          "upload-avatar": "Upload avatar",
+          "replace-avatar": "Replace avatar",
+          "remove-avatar": "Remove avatar"
         },
         "email": {
           "label": "Email",
@@ -363,6 +366,9 @@
       "mfa-enabled": "Multi-Factor Authentication enabled.",
       "profile-updated": "Profile updated.",
       "profile-update-failed": "Could not update profile.",
+      "avatar-invalid-file": "Choose a PNG, JPEG, or WebP image no larger than 2 MB.",
+      "avatar-update-failed": "Could not update avatar.",
+      "avatar-remove-failed": "Could not remove avatar.",
       "password-updated": "Password updated.",
       "password-update-failed": "Could not update password.",
       "passkey-registered": "Passkey registered successfully.",
@@ -399,6 +405,19 @@
         "open": "Open",
         "remove": "Remove",
         "save": "Save"
+      },
+      "avatar": {
+        "label": "User avatar",
+        "actions": {
+          "upload": "Upload avatar",
+          "replace": "Replace avatar",
+          "remove": "Remove avatar"
+        },
+        "messages": {
+          "invalid-file": "Choose a PNG, JPEG, or WebP image no larger than 2 MB.",
+          "update-failed": "Could not update avatar.",
+          "remove-failed": "Could not remove avatar."
+        }
       },
       "labels": {
         "mfa-required": "MFA Required",
