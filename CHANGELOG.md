@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `abd110b` | 2026-11-06 |
 | `ca1fd29` | 2026-10-27 |
 | `1e215b7` | 2026-10-24 |
 | `c82c4c2` | 2026-10-19 |
@@ -19,6 +20,16 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 | `b34e524` | 2026-08-26 |
 
 ## Fork changes
+
+### [Unreleased]
+
+#### Upstream sync
+
+- **2026-11-06 sync (34 commits)**: **LDAP jpegPhoto support** — directory entries expose user avatars as `jpegPhoto`; upstream also rewrote `server/ldap/server.ts` into focused BER/filter/request modules (the fork's H2 hardening seams were re-applied, 0 stale). **WebP backgrounds** — `background.webp` is now a supported branding background (fork admin upload/detection and `fork:check` updated). **ProxyAuth fixes** — max-session no longer blocks auth-header users, broader schema support, and a basic-auth rate-limit race fixed. Registration no longer requires a password (passkey signup fix); declared Docker clients with custom redirect schemes are marked native. **Asset URLs** are computed correctly when `APP_URL` has no base path (`shared/url.ts` rewritten; `matcher` replaced by `URLPattern`; fork `cors.ts` updated). Admin record pages get back buttons; emoji font/header styling fixes; dependency and action bumps (CodeQL v4.39.0)
+
+#### Developer tooling
+
+- `fork:check` now compares **every** `backgroundPreferenceOrder` copy in `server.ts` (including the form inside the `APP_LOGO` seam block) against `server/util/branding.ts`
 
 ### [1.20.0] - 2026-10-27
 
