@@ -361,7 +361,7 @@ export async function serve() {
       const mimeType = logoUrl.startsWith('data:image/svg+xml') ? 'image/svg+xml' : 'image/png'
       index = index.replaceAll(faviconRegex, `<link rel="icon" href="${escapeHtmlAttr(logoUrl)}" sizes="any" type="${mimeType}"/>`)
       index = index.replace(/<meta[^>]*name="logoUri"[^>]*>/g, `<meta name="logoUri" content="${escapeHtmlAttr(logoUrl)}"/>`)
-      const backgroundPreferenceOrder = ['background.png', 'background.jpg', 'background.jpeg']
+      const backgroundPreferenceOrder = ['background.png', 'background.webp', 'background.jpg', 'background.jpeg']
       const backgroundFile = backgroundPreferenceOrder.find(file => fs.readdirSync(path.join('./config/branding')).includes(file))
       if (backgroundFile) {
         index = index.replace('</head>', `<style>:root { --page-background-image: url("${backgroundFile}"); }</style></head>`)
@@ -371,7 +371,7 @@ export async function serve() {
 
     // dynamically replace favicon and logo depending on whats available in config/branding
     const brandingFiles = fs.readdirSync(path.join('./config/branding'))
-    const backgroundPreferenceOrder = ['background.png', 'background.jpg', 'background.jpeg']
+    const backgroundPreferenceOrder = ['background.png', 'background.webp', 'background.jpg', 'background.jpeg']
     const backgroundFile = backgroundPreferenceOrder.find(file => brandingFiles.includes(file))
     const isBrandingLogo = brandingFiles.includes('logo.svg') || brandingFiles.includes('logo.png')
     const isBrandingFavicon = brandingFiles.includes('favicon.svg') || brandingFiles.includes('favicon.png')

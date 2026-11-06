@@ -1,4 +1,4 @@
-import { isMatch } from 'matcher'
+import { hrefIsWildcardMatch } from '@shared/url'
 
 // Fork-owned module: OIDC client CORS policy. provider.ts keeps a single
 // `clientBasedCORS: corsForClient` seam (see FORK.md).
@@ -27,7 +27,7 @@ export function corsForClient(_ctx: unknown, origin: string, client: CorsClient)
     }
 
     const parsed = URL.parse(uri)
-    if (parsed?.protocol === originUrl.protocol && isMatch(originUrl.host, parsed.host)) {
+    if (parsed?.protocol && parsed.host && hrefIsWildcardMatch(`${parsed.protocol}//${parsed.host}`, origin)) {
       return true
     }
   }

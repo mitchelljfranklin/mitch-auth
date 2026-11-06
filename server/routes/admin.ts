@@ -1435,18 +1435,24 @@ adminRouter.post('/settings/logo',
 const MAX_BACKGROUND_SIZE_BYTES = 800 * 1024
 
 const backgroundUploadValidator = {
-  dataUrl: zod.string().regex(/^data:image\/(png|jpeg);base64,/, 'Must be a base64 PNG or JPEG data URL'),
-  mimeType: zod.enum(['image/png', 'image/jpeg']),
+  dataUrl: zod.string().regex(/^data:image\/(png|jpeg|webp);base64,/, 'Must be a base64 PNG, JPEG or WebP data URL'),
+  mimeType: zod.enum(['image/png', 'image/jpeg', 'image/webp']),
 }
 
 const BACKGROUND_EXTENSIONS: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
+  'image/webp': 'webp',
 }
 
 function imageBytesMatchMimeType(data: Buffer, mimeType: string): boolean {
   if (mimeType === 'image/png') {
     return data.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  }
+  if (mimeType === 'image/webp') {
+    return data.length > 11
+      && data.subarray(0, 4).toString('ascii') === 'RIFF'
+      && data.subarray(8, 12).toString('ascii') === 'WEBP'
   }
   return data.length > 2 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff
 }
