@@ -21,7 +21,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ## Fork changes
 
-### [Unreleased]
+### [1.21.0] - 2026-11-06
 
 #### Upstream sync
 
