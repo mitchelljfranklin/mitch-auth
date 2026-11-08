@@ -62,6 +62,7 @@ gh repo set-default mitchelljfranklin/mitch-auth   # with two remotes gh otherwi
 
 | Upstream base | Merged on | Notes |
 |---|---|---|
+| `cd6da7a` | 2026-11-08 |  |
 | `abd110b` | 2026-11-06 |  |
 | `ca1fd29` | 2026-10-27 |  |
 | `1e215b7` | 2026-10-24 |  |

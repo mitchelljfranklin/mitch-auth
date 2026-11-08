@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `cd6da7a` | 2026-11-08 |
 | `abd110b` | 2026-11-06 |
 | `ca1fd29` | 2026-10-27 |
 | `1e215b7` | 2026-10-24 |
@@ -20,6 +21,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 | `b34e524` | 2026-08-26 |
 
 ## Fork changes
+
+### [Unreleased]
+
+#### Upstream sync
+
+- **2026-11-08 sync (8 commits)**: **Hidden OIDC apps + user Apps section** — new `hide_from_home` client metadata (declared clients: `CLIENT_HIDE_FROM_HOME`), an admin checkbox, and a home-page section listing the apps a user can access. Also adds `CLIENT_MFA_REQUIRED` for declared clients. **Light theme** — upstream now applies the `light`/`dark` classes to both `<html>` and `<body>`; the fork's earlier equivalent fix is retired in favour of upstream's. **Sharp startup fix** — `sharp` is loaded lazily (`getSharp`), so a failing native import no longer crashes startup; image uploads now distinguish invalid files (400) from processing errors (500). OIDC app logos are guessed from client metadata when no logo is uploaded. i18n updates (all locales); Docker action bumps. No migrations
 
 ### [1.21.0] - 2026-11-06
 
