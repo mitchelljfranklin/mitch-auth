@@ -1,6 +1,6 @@
-# 🚀 Mitch-Auth v1.21.0 — LDAP Avatars & WebP Backgrounds
+# 🚀 Mitch-Auth v1.22.0 — App Discovery, Hidden Apps & Sharper Startup
 
-> **TL;DR** — User avatars now appear in LDAP as **`jpegPhoto`**, branding backgrounds accept **WebP**, proxy-auth got several fixes, passkey sign-up works again, and asset URLs are correct when `APP_URL` has no base path.
+> **TL;DR** — The home page now shows the OIDC apps a user can access (with guessed icons), admins can **hide apps** from that list, the light theme is fixed upstream, and a failed `sharp` import no longer risks crashing startup.
 
 ---
 
@@ -8,56 +8,48 @@
 
 | Area | Summary |
 |---|---|
-| 👤 LDAP | User avatars exposed as `jpegPhoto` (directory server rewritten under the hood) |
-| 🎨 Backgrounds | `background.webp` supported in the branding folder and in Admin upload |
-| 🛡️ ProxyAuth | Max-session, schema support and a basic-auth rate-limit race fixed |
-| 🔑 Sign-up | Passkey registration during sign-up fixed (no password required) |
-| 🔗 URLs | Correct asset URLs when `APP_URL` has no base path |
-| 🧭 Admin | Back buttons on individual record pages |
+| 🧭 App discovery | Home page lists the OIDC apps each user can access |
+| 🙈 Hidden apps | Per-client `hide_from_home` (admin checkbox; `CLIENT_HIDE_FROM_HOME` for declared clients) |
+| 🖼️ App icons | Uploaded logo, otherwise guessed from the app's home page (`apple-touch-icon.png`) |
+| 🌗 Light theme | Light/dark classes now apply to both `<html>` and `<body>` |
+| 🛡️ Startup | `sharp` is loaded lazily; image uploads return 400 vs 500 correctly |
+| 🔐 Declared clients | New `CLIENT_MFA_REQUIRED` variable |
 
 ---
 
 ## ✨ Highlights
 
-### 👤 Avatars in LDAP (`jpegPhoto`)
+### 🧭 Your apps, on your home page
 
-Directory entries now expose the user's avatar as `jpegPhoto`, so LDAP-aware apps can show profile pictures. It reuses the user-avatar uploads added in v1.20.0.
+The user home page now has an **Apps** section with tiles for the OIDC applications the user can access (same group rule as login; admins see everything). Only apps with a home page URL are shown, and ProxyAuth domains are not included.
 
-### 🎨 WebP backgrounds
+### 🙈 Hide an app from the home page
 
-`background.webp` is now recognized alongside `background.png` / `.jpg` / `.jpeg`. Drop one into `/app/config/branding`, or use **Admin → Settings → Appearance** — uploaded backgrounds are still optimized to JPEG client-side.
+Each OIDC app has a **hide from home** option in the admin UI (`hide_from_home`), plus `CLIENT_HIDE_FROM_HOME` for environment/label-declared clients. Hidden apps remain fully usable through their normal login flow — they are just omitted from the home page.
 
-### 🛡️ ProxyAuth fixes
+### 🖼️ Sensible app icons
 
-- Max-session no longer blocks users authenticating via `Authorization` / `Proxy-Authorization` headers.
-- Broader schema support for proxy-auth domains.
-- Fixed a race in basic-auth failure rate limiting.
+If an app has no uploaded logo, the tile falls back to the app's home page `apple-touch-icon.png` and hides broken images gracefully.
 
-### 🔑 Sign-up & URL fixes
+### 🌗 Light theme
 
-Passkey registration during sign-up no longer requires a password. Asset URLs are now generated correctly when `APP_URL` has no base path — the wildcard URL matcher was rewritten and `matcher` was replaced with the platform `URLPattern`.
+Upstream now applies the `light` / `dark` classes to **both** `<html>` and `<body>`, fixing the light-theme canvas when the OS is in dark mode. This supersedes the fork's earlier equivalent fix.
 
-### 🧭 Admin polish
+### 🛡️ Safer startup
 
-Individual record pages get a back button; header, button and language-switcher emoji styling were cleaned up.
+`sharp` is imported lazily (`getSharp`) and a failed native import no longer crashes the app at startup. Image uploads now distinguish invalid files (400) from processing failures (500).
 
----
+### 🔐 Declared client MFA
 
-## 🏗️ Under the hood
-
-- `server/ldap/server.ts` refactored into focused `ber` / `filter` / `request` modules.
-- Declared Docker clients with custom-scheme redirects are marked as native apps.
-- Docker container inspection is resilient to a single container failing.
-- Dependency refresh; CodeQL `init` / `analyze` at v4.39.0 (kept in lock-step by `fork:check`).
-- i18n updates (en-US, nl-NL).
+Declared clients can set `CLIENT_MFA_REQUIRED` alongside the existing redirect/consent/group variables.
 
 ---
 
 ## 📦 Upgrade
 
-- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.21.0` — multi-arch `linux/amd64` + `linux/arm64`
-- **No new database migrations or configuration changes.**
-- `jpegPhoto` reads existing user avatars; uploaded files stay in `/app/config/uploads`.
+- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.22.0` — multi-arch `linux/amd64` + `linux/arm64`
+- **No database migrations or configuration changes.**
+- Existing OIDC apps remain visible on the home page (`hide_from_home` defaults to false).
 
 ---
 
