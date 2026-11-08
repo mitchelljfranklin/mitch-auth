@@ -53,6 +53,8 @@ export function generateBase64URLString(bytes: number) {
   styleUrl: './upsert-client.component.scss',
 })
 export class UpsertClientComponent implements OnInit {
+  protected URL = URL
+
   public authMethods: { name: string, value: ItemIn<typeof CLIENT_AUTH_METHODS> }[] = [
     { name: 'Client Secret Basic', value: 'client_secret_basic' },
     { name: 'Client Secret Post', value: 'client_secret_post' },
@@ -108,6 +110,7 @@ export class UpsertClientComponent implements OnInit {
     backchannel_logout_uri: new FormControl<string | null>(null, [isValidWebURLControl]),
     skip_consent: new FormControl<boolean>(true, { nonNullable: true }),
     require_mfa: new FormControl<boolean>(false, { nonNullable: true }),
+    hide_from_home: new FormControl<boolean>(false, { nonNullable: true }),
     logo_uri: new FormControl<string | null>(null, [isValidWebURLControl]),
     client_uri: new FormControl<string | null>(null, [isValidWebURLControl]),
     groups: new FormControl<string[]>([], { nonNullable: true }),
@@ -239,6 +242,7 @@ export class UpsertClientComponent implements OnInit {
         backchannel_logout_uri: client.backchannel_logout_uri ?? null,
         skip_consent: client.skip_consent ?? true,
         require_mfa: client.require_mfa ?? false,
+        hide_from_home: client.hide_from_home ?? false,
         logo_uri: client.logo_uri ?? null,
         client_uri: client.client_uri ?? null,
         groups: client.groups,

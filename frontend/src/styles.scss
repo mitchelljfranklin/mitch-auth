@@ -49,11 +49,13 @@ body {
   ));
 }
 
-html.dark {
+html.dark,
+body.dark {
   color-scheme: dark;
 }
 
-html.light {
+html.light,
+body.light {
   color-scheme: light;
 }
 
