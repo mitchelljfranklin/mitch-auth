@@ -23,6 +23,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ## Fork changes
 
+### [Unreleased]
+
+#### Fixes
+
+- **LDAP sync with new users** — synced users are now inserted with `skipPasskeyPrompt: false`, fixing `NOT NULL constraint failed: user.skipPasskeyPrompt` on fresh deployments (regression from the passkey-prompt migration; affected both SQLite and PostgreSQL). The `test:ldap-sync` harness now provisions a new LDAP user to guard this insert.
+
 ### [1.22.1] - 2026-11-13
 
 #### Upstream sync

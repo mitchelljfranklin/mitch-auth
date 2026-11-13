@@ -10,7 +10,7 @@ process.env.STORAGE_KEY = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 process.env.APP_URL = 'http://localhost:3000'
 process.env.LDAP_SYNC_ADMIN_GROUP_NAME = 'voidadmins'
 
-const { assignAdminGroupToAdminLDAPUsers } = await import('../server/ldap/sync.ts')
+const { assignAdminGroupToAdminLDAPUsers, syncSingleUser } = await import('../server/ldap/sync.ts')
 const { db } = await import('../server/db/db.ts')
 
 const ZERO = '00000000-0000-0000-0000-000000000000'
@@ -114,6 +114,25 @@ check('no memberships changed when group missing', await isAdmin(bob), true)
 console.log('--- diagnostics: no memberOf match (expect warning above) ---')
 await assignAdminGroupToAdminLDAPUsers([bobEntry], [voidadminsGroup])
 check('no memberships changed without memberOf matches', await isAdmin(bob), true)
+
+// ---- new LDAP user provisioning (all NOT NULL user columns populated) ----
+console.log('--- new LDAP user provisioning ---')
+const carolDN = 'uid=carol,ou=people,dc=voidauth,dc=test'
+const carolId = await syncSingleUser({
+  dn: carolDN,
+  uid: 'carol',
+  mail: 'carol@voidauth.test',
+  givenName: 'Carol',
+  sn: 'Tester',
+})
+check('new LDAP user created', typeof carolId, 'string')
+const carol = carolId
+  ? await db().table('user').where({ id: carolId }).first() as
+    { skipPasskeyPrompt?: boolean, ldapSource?: string, ldapExternalId?: string } | undefined
+  : undefined
+check('new LDAP user has skipPasskeyPrompt set', carol?.skipPasskeyPrompt, false)
+check('new LDAP user is linked to LDAP', carol?.ldapSource, 'ldap')
+check('new LDAP user stores the external DN', carol?.ldapExternalId, carolDN)
 
 await db().destroy()
 console.log(failures === 0 ? 'ALL PASS' : `${String(failures)} FAILURES`)
