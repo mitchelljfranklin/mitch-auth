@@ -348,7 +348,7 @@ async function syncUsers(ldapUsers: Entry[]): Promise<Set<string>> {
  * Returns the VoidAuth user ID on success, undefined if the
  * entry was skipped (missing username attribute, etc.).
  */
-async function syncSingleUser(ldapUser: Entry): Promise<string | undefined> {
+export async function syncSingleUser(ldapUser: Entry): Promise<string | undefined> {
   const usernameAttr = appConfig.LDAP_SYNC_USERNAME_ATTRIBUTE ?? 'uid'
   const username = getStringAttribute(ldapUser, usernameAttr)
   if (!username) {
@@ -429,6 +429,7 @@ async function syncSingleUser(ldapUser: Entry): Promise<string | undefined> {
     emailVerified: true,
     approved: true,
     mfaRequired: false,
+    skipPasskeyPrompt: false,
     ldapSource: LDAP_SOURCE,
     ldapExternalId: externalId,
     createdAt: new Date(),
