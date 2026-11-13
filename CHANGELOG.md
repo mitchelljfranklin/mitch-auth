@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `dd4289c` | 2026-11-13 |
 | `cd6da7a` | 2026-11-08 |
 | `abd110b` | 2026-11-06 |
 | `ca1fd29` | 2026-10-27 |
@@ -21,6 +22,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 | `b34e524` | 2026-08-26 |
 
 ## Fork changes
+
+### [Unreleased]
+
+#### Upstream sync
+
+- **2026-11-13 sync (2 commits)**: **Group MFA visibility** — group `mfaRequired` is now included in user, invitation and admin-config group responses, and the admin user page warns when a user belongs to an MFA-required group but their own MFA toggle is off. **Invitation hardening** — registration verifies the invitation row was actually deleted (detects reuse/races) and tightens the validity boolean. **Uploaded assets** — avatars and client logos under `/assets/uploads` are served with `Cross-Origin-Resource-Policy: cross-origin`, so external apps can embed them. The frontend wildcard-URL validator now reports when the browser lacks `URLPattern`. Completed Russian translations and a new en-US warning string
 
 ### [1.22.0] - 2026-11-08
 
