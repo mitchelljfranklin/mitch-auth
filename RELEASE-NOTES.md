@@ -1,6 +1,6 @@
-# 🚀 Mitch-Auth v1.22.0 — App Discovery, Hidden Apps & Sharper Startup
+# 🩹 Mitch-Auth v1.22.1 — MFA Group Warnings, Invitation Hardening & Asset CORS
 
-> **TL;DR** — The home page now shows the OIDC apps a user can access (with guessed icons), admins can **hide apps** from that list, the light theme is fixed upstream, and a failed `sharp` import no longer risks crashing startup.
+> **TL;DR** — The admin user page warns when a user is covered by an MFA-required group, invitation registration is hardened against reuse, uploaded avatars/logos can be embedded cross-origin, and the Russian translation is complete.
 
 ---
 
@@ -8,48 +8,38 @@
 
 | Area | Summary |
 |---|---|
-| 🧭 App discovery | Home page lists the OIDC apps each user can access |
-| 🙈 Hidden apps | Per-client `hide_from_home` (admin checkbox; `CLIENT_HIDE_FROM_HOME` for declared clients) |
-| 🖼️ App icons | Uploaded logo, otherwise guessed from the app's home page (`apple-touch-icon.png`) |
-| 🌗 Light theme | Light/dark classes now apply to both `<html>` and `<body>` |
-| 🛡️ Startup | `sharp` is loaded lazily; image uploads return 400 vs 500 correctly |
-| 🔐 Declared clients | New `CLIENT_MFA_REQUIRED` variable |
+| 🔐 MFA groups | Group `mfaRequired` is exposed to the admin UI, with a warning when a user's own MFA toggle is off |
+| 🧾 Invitations | Registration confirms the invitation was actually consumed (catches reuse/races) |
+| 🖼️ Assets | Avatars and client logos are served with `Cross-Origin-Resource-Policy: cross-origin` |
+| 🌍 i18n | Russian translation completed; new MFA warning string |
+| 🧭 Browser check | Wildcard-URL validation now reports a missing `URLPattern` API clearly |
 
 ---
 
 ## ✨ Highlights
 
-### 🧭 Your apps, on your home page
+### 🔐 MFA-required group warnings
 
-The user home page now has an **Apps** section with tiles for the OIDC applications the user can access (same group rule as login; admins see everything). Only apps with a home page URL are shown, and ProxyAuth domains are not included.
+Group MFA requirements are now included in the user, invitation and admin-config group data. When editing a user who belongs to an MFA-required group but whose personal MFA toggle is off, the admin page shows a warning naming the group — so it's clear why MFA will still be enforced.
 
-### 🙈 Hide an app from the home page
+### 🧾 Invitation hardening
 
-Each OIDC app has a **hide from home** option in the admin UI (`hide_from_home`), plus `CLIENT_HIDE_FROM_HOME` for environment/label-declared clients. Hidden apps remain fully usable through their normal login flow — they are just omitted from the home page.
+Registration and passkey registration now verify that the invitation row was actually deleted after use. If it was already consumed (a race or reuse attempt), registration fails with a clear error instead of proceeding on a stale invitation.
 
-### 🖼️ Sensible app icons
+### 🖼️ Embeddable avatars and logos
 
-If an app has no uploaded logo, the tile falls back to the app's home page `apple-touch-icon.png` and hides broken images gracefully.
+Files under `/assets/uploads` (user avatars, OIDC app logos) now carry `Cross-Origin-Resource-Policy: cross-origin`, so external applications can embed them without being blocked by Helmet's default same-origin policy.
 
-### 🌗 Light theme
+### 🌍 Localization & small fixes
 
-Upstream now applies the `light` / `dark` classes to **both** `<html>` and `<body>`, fixing the light-theme canvas when the OS is in dark mode. This supersedes the fork's earlier equivalent fix.
-
-### 🛡️ Safer startup
-
-`sharp` is imported lazily (`getSharp`) and a failed native import no longer crashes the app at startup. Image uploads now distinguish invalid files (400) from processing failures (500).
-
-### 🔐 Declared client MFA
-
-Declared clients can set `CLIENT_MFA_REQUIRED` alongside the existing redirect/consent/group variables.
+Completed the Russian translation and added the new MFA-warning string. The frontend wildcard-redirect validator now reports when the browser lacks the `URLPattern` API, instead of failing opaquely.
 
 ---
 
 ## 📦 Upgrade
 
-- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.22.0` — multi-arch `linux/amd64` + `linux/arm64`
+- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.22.1` — multi-arch `linux/amd64` + `linux/arm64`
 - **No database migrations or configuration changes.**
-- Existing OIDC apps remain visible on the home page (`hide_from_home` defaults to false).
 
 ---
 
