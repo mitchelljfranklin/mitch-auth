@@ -376,7 +376,7 @@ router.post('/register',
     }
 
     const invitation = registration.inviteId ? await getInvitation(registration.inviteId) : null
-    const invitationValid = invitation && invitation.challenge === registration.challenge
+    const invitationValid = !!(invitation && invitation.challenge === registration.challenge)
 
     if (!invitationValid && !appConfig.SIGNUP) {
       res.sendStatus(400)
@@ -392,7 +392,7 @@ router.post('/register',
       name: invitation?.name || registration.name,
       email: invitation?.email || registration.email,
       passwordHash,
-      approved: !!invitationValid, // invited users are approved by default
+      approved: invitationValid, // invited users are approved by default
       expiresAt: invitation?.userExpiresAt ? new Date(invitation.userExpiresAt) : null,
       emailVerified: !!invitation?.email && invitation.emailVerified,
       mfaRequired: !!invitation?.mfaRequired,
@@ -458,7 +458,10 @@ router.post('/register',
 
     if (invitationValid) {
       await transferInvitationAvatar(invitation.id, user.id)
-      await db().table<Invitation>(TABLES.INVITATION).delete().where({ id: invitation.id })
+      const deleted = await db().table<Invitation>(TABLES.INVITATION).delete().where({ id: invitation.id })
+      if (!deleted) {
+        throw Error('Invitation was not deleted after registration, it may have already been used.')
+      }
     }
 
     const createdUser = await getUserById(user.id)
@@ -500,7 +503,7 @@ router.post('/register/passkey/start',
     // check open signup or valid invitation
     // Make sure that if invitation, it is valid
     const invitation = invite.inviteId ? await getInvitation(invite.inviteId) : null
-    const invitationValid = invitation && invitation.challenge === invite.challenge
+    const invitationValid = !!(invitation && invitation.challenge === invite.challenge)
     if (!invitationValid && !appConfig.SIGNUP) {
       res.sendStatus(400)
       return
@@ -540,7 +543,7 @@ router.post('/register/passkey/end',
     }
 
     const invitation = registration.inviteId ? await getInvitation(registration.inviteId) : null
-    const invitationValid = invitation && invitation.challenge === registration.challenge
+    const invitationValid = !!(invitation && invitation.challenge === registration.challenge)
 
     if (!invitationValid && !appConfig.SIGNUP) {
       res.sendStatus(400)
@@ -561,7 +564,7 @@ router.post('/register/passkey/end',
       username: invitation?.username || registration.username,
       name: invitation?.name || registration.name,
       email: invitation?.email || registration.email,
-      approved: !!invitationValid, // invited users are approved by default
+      approved: invitationValid, // invited users are approved by default
       expiresAt: invitation?.userExpiresAt ? new Date(invitation.userExpiresAt) : null,
       emailVerified: !!invitation?.email && invitation.emailVerified,
       mfaRequired: !!invitation?.mfaRequired,
@@ -627,7 +630,10 @@ router.post('/register/passkey/end',
 
     if (invitationValid) {
       await transferInvitationAvatar(invitation.id, user.id)
-      await db().table<Invitation>(TABLES.INVITATION).delete().where({ id: invitation.id })
+      const deleted = await db().table<Invitation>(TABLES.INVITATION).delete().where({ id: invitation.id })
+      if (!deleted) {
+        throw Error('Invitation was not deleted after registration, it may have already been used.')
+      }
     }
 
     const createdUser = await getUserById(user.id)
