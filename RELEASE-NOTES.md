@@ -1,51 +1,41 @@
-# 🩹 Mitch-Auth v1.22.1 — MFA Group Warnings, Invitation Hardening & Asset CORS
+# 🩹 Mitch-Auth v1.22.2 — LDAP Sync New-User Fix
 
-> **TL;DR** — The admin user page warns when a user is covered by an MFA-required group, invitation registration is hardened against reuse, uploaded avatars/logos can be embedded cross-origin, and the Russian translation is complete.
-
----
-
-## 📋 At a Glance
-
-| Area | Summary |
-|---|---|
-| 🔐 MFA groups | Group `mfaRequired` is exposed to the admin UI, with a warning when a user's own MFA toggle is off |
-| 🧾 Invitations | Registration confirms the invitation was actually consumed (catches reuse/races) |
-| 🖼️ Assets | Avatars and client logos are served with `Cross-Origin-Resource-Policy: cross-origin` |
-| 🌍 i18n | Russian translation completed; new MFA warning string |
-| 🧭 Browser check | Wildcard-URL validation now reports a missing `URLPattern` API clearly |
+> **TL;DR** — Fresh deployments can sync new LDAP users again. The sync insert was missing the `skipPasskeyPrompt` value required by the passkey-prompt migration, so every new LDAP user failed to create.
 
 ---
 
-## ✨ Highlights
+## 🐛 What was wrong
 
-### 🔐 MFA-required group warnings
+Every new LDAP user insert failed with:
 
-Group MFA requirements are now included in the user, invitation and admin-config group data. When editing a user who belongs to an MFA-required group but whose personal MFA toggle is off, the admin page shows a warning naming the group — so it's clear why MFA will still be enforced.
+```
+NOT NULL constraint failed: user.skipPasskeyPrompt
+```
 
-### 🧾 Invitation hardening
+The passkey-prompt migration made `user.skipPasskeyPrompt` `NOT NULL` **without a database default**. All other user-insert paths set it; the LDAP sync was the only one missed. This affected **both SQLite and PostgreSQL** — it was just easier to hit on SQLite because the migration rebuilds the table.
 
-Registration and passkey registration now verify that the invitation row was actually deleted after use. If it was already consumed (a race or reuse attempt), registration fails with a clear error instead of proceeding on a stale invitation.
+Reported in [#33](https://github.com/mitchelljfranklin/mitch-auth/issues/33).
 
-### 🖼️ Embeddable avatars and logos
+---
 
-Files under `/assets/uploads` (user avatars, OIDC app logos) now carry `Cross-Origin-Resource-Policy: cross-origin`, so external applications can embed them without being blocked by Helmet's default same-origin policy.
+## ✅ The fix
 
-### 🌍 Localization & small fixes
-
-Completed the Russian translation and added the new MFA-warning string. The frontend wildcard-redirect validator now reports when the browser lacks the `URLPattern` API, instead of failing opaquely.
+- `server/ldap/sync.ts` now writes `skipPasskeyPrompt: false` when provisioning a synced user.
+- `test:ldap-sync` now provisions a **brand-new** LDAP user and asserts `skipPasskeyPrompt`, LDAP source and the stored external DN — so future `NOT NULL` additions to the user table are caught by the harness.
+- **No schema change.** The migration intentionally has no default; every insert must supply the value. If you applied a SQLite `DEFAULT false` workaround manually, it is safe to leave in place or revert after upgrading.
 
 ---
 
 ## 📦 Upgrade
 
-- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.22.1` — multi-arch `linux/amd64` + `linux/arm64`
-- **No database migrations or configuration changes.**
+- Image: `ghcr.io/mitchelljfranklin/mitch-auth:1.22.2` — multi-arch `linux/amd64` + `linux/arm64`
+- **No new migrations or configuration changes.**
 
 ---
 
 ## ✅ Verification
 
-`tsc` / `eslint` clean; `dpdm` circular check and esbuild bundle pass; `fork:check` (27 seams + 29 divergences); production Angular AOT build; `test:integration` (`ldap-guard`, `totp`, `ldap-sync`) all pass; runtime smoke test including branding-background serving; fork CI and CodeQL green.
+`tsc` / `eslint` clean; `dpdm` circular check and esbuild bundle pass; `fork:check` (27 seams + 29 divergences); production Angular AOT build; `test:integration` (`ldap-guard`, `totp`, `ldap-sync`) all pass, including the new LDAP provisioning assertions; runtime smoke test including branding-background serving; fork CI and CodeQL green.
 
 ---
 
