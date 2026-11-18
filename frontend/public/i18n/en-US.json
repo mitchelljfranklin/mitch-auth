@@ -294,7 +294,8 @@
           },
           "change": {
             "label": "Change Password"
-          }
+          },
+          "ldap-managed": "Your password is managed by your LDAP directory. Change it there."
         },
         "passkeys": {
           "title": "Passkeys",

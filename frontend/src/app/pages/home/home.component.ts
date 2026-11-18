@@ -41,6 +41,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   avatarPreviewUrl = signal<string | null>(null)
   removeAvatarSelected = signal(false)
 
+  get ldapManaged(): boolean {
+    return !!this.user?.ldapSource
+  }
+
+  get hasLoginCredential(): boolean {
+    return this.user?.hasPassword || this.ldapManaged
+  }
+
   public passkeySupport?: PasskeySupport
   public isPasskeySession: boolean = false
   config?: ConfigResponse

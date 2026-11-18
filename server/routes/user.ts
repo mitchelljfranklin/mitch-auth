@@ -204,6 +204,11 @@ userRouter.patch('/password',
 
     const { oldPassword, newPassword } = req.body
 
+    if (user.ldapSource) {
+      res.status(403).send({ message: 'Password is managed by LDAP and cannot be changed here.' })
+      return
+    }
+
     if (passwordStrength(newPassword).score < appConfig.PASSWORD_STRENGTH) {
       res.status(422).send({ message: 'Password is not strong enough.' })
       return

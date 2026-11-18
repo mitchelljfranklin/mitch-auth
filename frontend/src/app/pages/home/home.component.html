@@ -120,30 +120,34 @@
   </mat-card-header>
   <mat-card-content>
     <form [formGroup]="passwordForm">
-      <app-password-set
-        style="width: 100%; margin-top: 0px"
-        [oldPassword]="user?.hasPassword ? passwordForm.controls.oldPassword : undefined"
-        [newPassword]="passwordForm.controls.newPassword"
-        [confirmPassword]="passwordForm.controls.confirmPassword"
-      >
-      </app-password-set>
-
-      <mat-card-actions>
-        <button
-          mat-flat-button
-          type="button"
-          (click)="updatePassword()"
-          [disabled]="!passwordForm.enabled || !passwordForm.valid || !passwordForm.dirty"
+      @if (ldapManaged) {
+        <p class="ldap-password-note">{{ "settings.sections.security.password.ldap-managed" | translate }}</p>
+      } @else {
+        <app-password-set
+          style="width: 100%; margin-top: 0px"
+          [oldPassword]="user?.hasPassword ? passwordForm.controls.oldPassword : undefined"
+          [newPassword]="passwordForm.controls.newPassword"
+          [confirmPassword]="passwordForm.controls.confirmPassword"
         >
-          @if (user?.hasPassword) {
-            {{ "settings.sections.security.password.change.label" | translate }}
-          } @else {
-            {{ "settings.sections.security.password.set.label" | translate }}
-          }
-        </button>
-      </mat-card-actions>
+        </app-password-set>
 
-      <mat-divider class="disabled"></mat-divider>
+        <mat-card-actions>
+          <button
+            mat-flat-button
+            type="button"
+            (click)="updatePassword()"
+            [disabled]="!passwordForm.enabled || !passwordForm.valid || !passwordForm.dirty"
+          >
+            @if (user?.hasPassword) {
+              {{ "settings.sections.security.password.change.label" | translate }}
+            } @else {
+              {{ "settings.sections.security.password.set.label" | translate }}
+            }
+          </button>
+        </mat-card-actions>
+
+        <mat-divider class="disabled"></mat-divider>
+      }
 
       <h2 style="margin-top: -16px">{{ "settings.sections.security.passkeys.title" | translate }}</h2>
 
@@ -190,7 +194,7 @@
                 <button
                   mat-icon-button
                   type="button"
-                  [disabled]="passkeys.data.length < 2 && !user?.hasPassword"
+                  [disabled]="passkeys.data.length < 2 && !hasLoginCredential"
                   (click)="deletePasskey(row.id)"
                   [matTooltip]="'settings.sections.security.passkeys.actions.delete.tooltip' | translate"
                 >
@@ -249,30 +253,32 @@
   <mat-card-content>
     <form>
       <mat-card-actions>
-        <span
-          [matTooltip]="
-            !user?.hasPassword
-              ? ('settings.sections.account.removePassword.tooltip.noPassword' | translate)
-              : !user.hasPasskeys
-                ? ('settings.sections.account.removePassword.tooltip.noPasskeys' | translate)
-                : null
-          "
-          ><button
-            mat-flat-button
-            type="button"
-            class="error-button"
-            (click)="removePassword()"
-            [disabled]="!user?.hasPassword || !user.hasPasskeys"
+        @if (!ldapManaged) {
+          <span
+            [matTooltip]="
+              !user?.hasPassword
+                ? ('settings.sections.account.removePassword.tooltip.noPassword' | translate)
+                : !user.hasPasskeys
+                  ? ('settings.sections.account.removePassword.tooltip.noPasskeys' | translate)
+                  : null
+            "
+            ><button
+              mat-flat-button
+              type="button"
+              class="error-button"
+              (click)="removePassword()"
+              [disabled]="!user?.hasPassword || !user.hasPasskeys"
+            >
+              {{ "settings.sections.account.removePassword.label" | translate }}
+            </button></span
           >
-            {{ "settings.sections.account.removePassword.label" | translate }}
-          </button></span
-        >
+        }
 
         <span
           [matTooltip]="
             !user?.hasPasskeys
               ? ('settings.sections.account.removeAllPasskeys.tooltip.noPasskeys' | translate)
-              : !user.hasPassword
+              : !hasLoginCredential
                 ? ('settings.sections.account.removeAllPasskeys.tooltip.noPassword' | translate)
                 : null
           "
@@ -281,7 +287,7 @@
             type="button"
             class="error-button"
             (click)="removeAllPasskeys()"
-            [disabled]="!user?.hasPasskeys || !user.hasPassword"
+            [disabled]="!user?.hasPasskeys || !hasLoginCredential"
           >
             {{ "settings.sections.account.removeAllPasskeys.label" | translate }}
           </button></span

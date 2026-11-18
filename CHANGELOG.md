@@ -23,6 +23,12 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 ## Fork changes
 
+### [Unreleased]
+
+#### Security
+
+- **LDAP credential shadowing fixed** — users synced from an external LDAP directory now authenticate **only** against LDAP. They can no longer set a local password from the profile page (the API returns 403 and the form is hidden), and `checkPasswordHash()` no longer falls back to a local argon2 hash. This closes the case where an LDAP user could log in with either their directory password or a locally set password — even after the directory credential changed. `test:ldap-sync` now asserts local hashes are ignored for LDAP users.
+
 ### [1.22.2] - 2026-11-13
 
 #### Fixes

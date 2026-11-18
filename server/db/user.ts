@@ -189,12 +189,10 @@ export async function getUserByUsername(username: string): Promise<UserDetails |
 }
 
 /**
- * Verify a user's password.  For LDAP-synced users (ldapSource +
- * ldapExternalId set) this delegates to an LDAP simple bind against
- * the remote directory.  Non-LDAP users fall through to the existing
- * argon2 hash check.  An LDAP user whose bind fails will still fall
- * through to argon2 (which also fails since they have no local hash),
- * so the net result for a bad credential is always false.
+ * Verify a user's password.  Users linked to an external LDAP directory
+ * (ldapSource + ldapExternalId) are authenticated **only** by an LDAP simple
+ * bind; any local password hash is ignored.  All other users are verified
+ * against their argon2 hash.
  */
 export async function checkPasswordHash(userId: string, password: string): Promise<boolean> {
   if (!password) {
@@ -222,8 +220,9 @@ export async function checkPasswordHash(userId: string, password: string): Promi
 
     logger({
       level: 'debug',
-      message: `LDAP bind auth failed for user: ${user.username}, falling back to local password`,
+      message: `LDAP bind auth failed for user: ${user.username}`,
     })
+    return false
   }
 
   return !!user.passwordHash && argon2.verify(user.passwordHash, password)
