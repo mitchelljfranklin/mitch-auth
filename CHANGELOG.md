@@ -6,6 +6,7 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 
 | Upstream base | Merged on |
 |---|---|
+| `9506094` | 2026-11-18 |
 | `dd4289c` | 2026-11-13 |
 | `cd6da7a` | 2026-11-08 |
 | `abd110b` | 2026-11-06 |
@@ -28,6 +29,10 @@ This fork tracks [voidauth/voidauth](https://github.com/voidauth/voidauth).
 #### Security
 
 - **LDAP credential shadowing fixed** — users synced from an external LDAP directory now authenticate **only** against LDAP. They can no longer set a local password from the profile page (the API returns 403 and the form is hidden), and `checkPasswordHash()` no longer falls back to a local argon2 hash. This closes the case where an LDAP user could log in with either their directory password or a locally set password — even after the directory credential changed. `test:ldap-sync` now asserts local hashes are ignored for LDAP users.
+
+#### Upstream sync
+
+- **2026-11-18 sync (5 commits)**: **Italian (it-IT) locale**, a **search bar** on the ProxyAuth domains admin page, and reordered admin sidebar items (Users/Invitations before Apps/Domains). CodeQL `init`/`analyze` bumped to v4.39.3. The app shell now loads private user details (needed by the sidebar). No server/config changes
 
 ### [1.22.2] - 2026-11-13
 
