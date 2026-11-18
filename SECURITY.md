@@ -120,6 +120,10 @@ HTTP‑only, Secure, and SameSite=Lax.
 - All `FILE__*` environment variable variants are supported for secrets
   (e.g. `FILE__LDAP_SYNC_BIND_PASSWORD`), avoiding credentials in
   plaintext compose files.
+- LDAP-managed accounts authenticate **only** against the directory: local
+  password hashes are ignored, and users cannot set a local password in the
+  UI or API. This prevents a second, local credential from surviving a
+  directory password change or account revocation.
 
 ### Rate limiting
 

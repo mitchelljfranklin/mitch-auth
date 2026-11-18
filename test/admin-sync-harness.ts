@@ -11,6 +11,8 @@ process.env.APP_URL = 'http://localhost:3000'
 process.env.LDAP_SYNC_ADMIN_GROUP_NAME = 'voidadmins'
 
 const { assignAdminGroupToAdminLDAPUsers, syncSingleUser } = await import('../server/ldap/sync.ts')
+const { checkPasswordHash } = await import('../server/db/user.ts')
+const { argon2 } = await import('../server/util/argon2id.ts')
 const { db } = await import('../server/db/db.ts')
 
 const ZERO = '00000000-0000-0000-0000-000000000000'
@@ -133,6 +135,24 @@ const carol = carolId
 check('new LDAP user has skipPasskeyPrompt set', carol?.skipPasskeyPrompt, false)
 check('new LDAP user is linked to LDAP', carol?.ldapSource, 'ldap')
 check('new LDAP user stores the external DN', carol?.ldapExternalId, carolDN)
+
+// ---- LDAP users ignore local password hashes ----
+console.log('--- LDAP local password fallback removed ---')
+const daveId = crypto.randomUUID()
+await db().table('user').insert({
+  id: daveId,
+  username: 'dave',
+  passwordHash: argon2.hash('local-secret'),
+  approved: true,
+  emailVerified: true,
+  mfaRequired: false,
+  skipPasskeyPrompt: false,
+  ldapSource: 'ldap',
+  ldapExternalId: 'uid=dave,ou=people,dc=voidauth,dc=test',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+})
+check('LDAP user local password is ignored', await checkPasswordHash(daveId, 'local-secret'), false)
 
 await db().destroy()
 console.log(failures === 0 ? 'ALL PASS' : `${String(failures)} FAILURES`)

@@ -34,6 +34,7 @@ It also fires once at server startup so the first sync is immediate.
 4. If the bind succeeds → authenticated.  If it fails → credential rejected.
 
 **Implications**:
+- LDAP-managed users are authenticated **only** against LDAP. They cannot set or change a local password in VoidAuth — the password form is hidden and the API rejects changes — and any local password hash is ignored.
 - LDAP password changes take effect immediately — no sync delay.
 - VoidAuth never stores the user's LDAP password.
 - Password reset in VoidAuth won't work for LDAP users; they must change their password in LDAP.

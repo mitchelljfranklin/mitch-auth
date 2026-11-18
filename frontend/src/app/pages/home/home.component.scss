@@ -105,3 +105,9 @@ mat-expansion-panel.key-manage-panel {
     overflow-wrap: anywhere;
   }
 }
+
+.ldap-password-note {
+  margin: 0 0 16px;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+}
